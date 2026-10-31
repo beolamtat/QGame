@@ -58,3 +58,30 @@ test('v0.6.2 character atlas survives movement, zone switches and reload',async(
  await expect(page.locator('#game')).toHaveAttribute('data-hero-atlas-frames','24');
  expect(errors).toEqual([]);
 });
+
+test('v0.6.3 shared prop textures and runtime diagnostics remain bounded',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ const host=page.locator('#game');
+ await expect(host).toHaveAttribute('data-prop-atlas-frames','6');
+ await expect.poll(async()=>Number(await host.getAttribute('data-display-objects')),{timeout:12000}).toBeGreaterThan(0);
+ const farmObjects=Number(await host.getAttribute('data-display-objects'));
+ const farmTextures=Number(await host.getAttribute('data-texture-count'));
+ expect(farmObjects).toBeLessThan(150);
+ expect(farmTextures).toBeLessThan(30);
+ await testInfo.attach('farm-v063.png',{body:await page.screenshot(),contentType:'image/png'});
+ for(let i=0;i<3;i++){
+  await page.locator('#action').click();
+  await expect(host).toHaveAttribute('data-zone','cafe');
+  await page.locator('#action').click();
+  await expect(host).toHaveAttribute('data-zone','farm');
+ }
+ await expect.poll(async()=>Number(await host.getAttribute('data-display-objects'))).toBeGreaterThan(0);
+ const afterObjects=Number(await host.getAttribute('data-display-objects'));
+ const afterTextures=Number(await host.getAttribute('data-texture-count'));
+ expect(afterObjects).toBeLessThan(150);
+ expect(afterTextures).toBeLessThanOrEqual(farmTextures+1);
+ await page.locator('#action').click();
+ await testInfo.attach('cafe-v063.png',{body:await page.screenshot(),contentType:'image/png'});
+ expect(errors).toEqual([]);
+});
