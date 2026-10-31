@@ -120,10 +120,10 @@ test('v0.6.5 environment art is shared across scenes and mobile orientations',as
  await expect(host).toHaveAttribute('data-zone','cafe');
  await testInfo.attach('cafe-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await page.setViewportSize({width:390,height:844});
- await expect.poll(async()=>host.getAttribute('data-viewport')).toMatch(/^390x[3-9]\\d{2}$/);
+ await expect.poll(async()=>host.getAttribute('data-viewport')).toMatch(/^390x[3-9]\d{2}$/);
  await testInfo.attach('mobile-portrait-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  await page.setViewportSize({width:844,height:390});
- await expect.poll(async()=>host.getAttribute('data-viewport')).toMatch(/^844x[2-9]\\d{2}$/);
+ await expect.poll(async()=>host.getAttribute('data-viewport')).toMatch(/^844x[2-9]\d{2}$/);
  await testInfo.attach('mobile-landscape-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
  for(let i=0;i<20;i++){
   await page.locator('#action').dispatchEvent('click');
