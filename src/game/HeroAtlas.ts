@@ -29,7 +29,9 @@ function frame(c:CanvasRenderingContext2D,dir:HeroDirection,pose:number,x:number
  stroke(c,20,56,22+swing*.7,79,9,color.shirt);
  ellipse(c,0,64,23,28,color.outline);
  ellipse(c,0,63,20,25,color.shirt);
- if(!back){ellipse(c,0,70,13,19,color.apron);stroke(c,-13,58,13,58,3,'#c49c69')}
+ // Shirt seam and small brass buttons keep the chibi readable at half scale.
+ if(!back){stroke(c,-13,52,-7,76,2,'#6cb0ac');stroke(c,13,52,7,76,2,'#33767e')}
+ if(!back){ellipse(c,0,70,13,19,color.apron);stroke(c,-13,58,13,58,3,'#c49c69');ellipse(c,0,69,3,3,'#d2a66d');stroke(c,-9,80,9,80,2,'#ddcba4')}
  else{stroke(c,-13,65,13,65,3,'#367b79')}
  const hx=side?sign*4:diagonal?sign*2:0;
  ellipse(c,hx,35,24,24,color.outline);
@@ -51,6 +53,7 @@ function frame(c:CanvasRenderingContext2D,dir:HeroDirection,pose:number,x:number
  ellipse(c,hx,17,27,6,color.hat);
  ellipse(c,hx,11,19,12,color.hat);
  ellipse(c,hx,10,5,3,'#5c9b73');
+ ellipse(c,hx-8,11,4,2,'rgba(255,245,205,.65)');
  c.restore();
 }
 export function registerHeroAtlas(scene:Phaser.Scene):void{
