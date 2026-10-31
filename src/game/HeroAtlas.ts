@@ -70,5 +70,7 @@ export function registerHeroAtlas(scene:Phaser.Scene):void{
 }
 export function makeHeroSprite(scene:Phaser.Scene):Phaser.GameObjects.Sprite{
  registerHeroAtlas(scene);
- return scene.add.sprite(0,-12,HERO_ATLAS_KEY,'s-0').setOrigin(.5,.9);
+ const sprite=scene.add.sprite(0,-12,HERO_ATLAS_KEY,'s-0').setOrigin(.5,.9);
+ if(sprite.frame.width===40)sprite.setScale(2);
+ return sprite;
 }
