@@ -163,3 +163,21 @@ test('v0.6.6 responsive HUD fits mobile portrait and landscape without horizonta
  await page.locator('#map-close').click();
  expect(errors).toEqual([]);
 });
+
+test('v0.6.7 WebP crop atlas loads once and preserves crop frames across zones',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ const host=page.locator('#game');
+ await expect(host).toHaveAttribute('data-asset-format','webp');
+ await expect(host).toHaveAttribute('data-crop-webp-bytes','816');
+ await expect(host).toHaveAttribute('data-atlas-frames','4');
+ await testInfo.attach('webp-crops-v067.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ for(let i=0;i<12;i++){
+  await page.locator('#action').dispatchEvent('click');
+  await expect(host).toHaveAttribute('data-zone',i%2===0?'cafe':'farm');
+  await expect(host).toHaveAttribute('data-asset-format','webp');
+ }
+ await expect.poll(async()=>Number(await host.getAttribute('data-texture-count'))).toBeGreaterThan(0);
+ expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThan(20);
+ expect(errors).toEqual([]);
+});
