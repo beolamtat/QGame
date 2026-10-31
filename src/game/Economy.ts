@@ -9,15 +9,15 @@ export const RECIPES:Record<RecipeId,{name:string,beans:number,milk:number,choco
 };
 const KEY='coffee-world-save-v03';
 const initial=():State=>({coins:120,beans:0,drinks:0,harvested:0,roasted:0,prepared:[],milk:3,chocolate:2,level:1,served:0,plots:Array.from({length:12},()=>({stage:'ripe',watered:true,readyAt:0})),orders:[],nextOrderId:1});
-export function load():State{const defaults=initial();try{const raw=JSON.parse(localStorage.getItem(KEY)||'null') as Partial<State>|null;if(!raw)return defaults;return {...defaults,...raw,plots:Array.isArray(raw.plots)&&raw.plots.length===12?raw.plots:defaults.plots,orders:[],prepared:Array.isArray(raw.prepared)?raw.prepared:[]}}catch{return defaults}}
-export function persist(s:State){localStorage.setItem(KEY,JSON.stringify(s))}
+export function load():State{const defaults=initial();try{const raw=JSON.parse(localStorage.getItem(KEY)||'null') as Partial<State>|null;if(!raw)return defaults;return {...defaults,...raw,drinks:Array.isArray(raw.prepared)?raw.prepared.filter((v:unknown)=>v==='espresso'||v==='latte'||v==='mocha').length:0,plots:Array.isArray(raw.plots)&&raw.plots.length===12?raw.plots:defaults.plots,orders:[],prepared:Array.isArray(raw.prepared)?raw.prepared.filter((v:unknown):v is RecipeId=>v==='espresso'||v==='latte'||v==='mocha'):[]}}catch{return defaults}}
+export function persist(s:State){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{ /* Private mode and storage quota: keep playing in memory */ }}
 export function grow(s:State,now=Date.now()){for(const p of s.plots){if(p.stage==='growing'&&p.watered&&now>=p.readyAt){p.stage='ripe';p.watered=false}}}
 export function plant(s:State,index:number){const p=s.plots[index];if(!p||p.stage!=='empty'||s.coins<3)return false;s.coins-=3;p.stage='seed';p.watered=false;p.readyAt=0;return true}
 export function water(s:State,index:number){const p=s.plots[index];if(!p||p.stage!=='seed')return false;p.stage='growing';p.watered=true;p.readyAt=Date.now()+12000;return true}
 export function harvest(s:State,index:number){const p=s.plots[index];if(!p||p.stage!=='ripe')return false;p.stage='empty';p.watered=false;s.beans+=3;s.harvested++;return true}
 export function roast(s:State){if(s.beans<3)return false;s.beans-=3;s.roasted+=3;return true}
 export function brew(s:State,id:RecipeId){const r=RECIPES[id];if(s.roasted<r.beans||s.milk<r.milk||s.chocolate<r.chocolate)return false;s.roasted-=r.beans;s.milk-=r.milk;s.chocolate-=r.chocolate;return true}
-export function serve(s:State,order:Order){if(!s.prepared.includes(order.recipe)||!s.orders.some(o=>o.id===order.id)||Date.now()>order.expiresAt)return false;s.prepared.splice(s.prepared.indexOf(order.recipe),1);s.drinks=s.prepared.length;s.coins+=RECIPES[order.recipe].price+5*(s.level-1);s.served++;s.orders=s.orders.filter(o=>o.id!==order.id);return true}
+export function serve(s:State,order:Order){if(!s.prepared.includes(order.recipe)||!s.orders.some(o=>o.id===order.id&&o.recipe===order.recipe)||Date.now()>order.expiresAt)return false;s.prepared.splice(s.prepared.indexOf(order.recipe),1);s.drinks=s.prepared.length;s.coins+=RECIPES[order.recipe].price+5*(s.level-1);s.served++;s.orders=s.orders.filter(o=>o.id!==order.id);return true}
 export function upgrade(s:State){const cost=100*s.level;if(s.coins<cost)return false;s.coins-=cost;s.level++;return true}
 export function restock(s:State){if(s.coins<20)return false;s.coins-=20;s.milk+=3;s.chocolate+=2;return true}
 export function newOrder(s:State,now=Date.now()){if(s.orders.length>=4)return null;const ids:RecipeId[]=s.level<2?['espresso','latte']:['espresso','latte','mocha'];const recipe=ids[Math.floor(Math.random()*ids.length)];const order={id:s.nextOrderId++,recipe,expiresAt:now+90000};s.orders.push(order);return order}
