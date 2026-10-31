@@ -26,12 +26,12 @@ test('v0.6.1 orientation resize preserves usable camera and interactions',async(
  await page.goto('/');
  await expect(page.locator('#game canvas')).toBeVisible();
  await page.setViewportSize({width:390,height:844});
- await expect.poll(async()=>await page.locator('#game').getAttribute('data-viewport')).toMatch(/^390x[3-9]\\d{2}$/);
+ await expect.poll(async()=>await page.locator('#game').getAttribute('data-viewport')).toMatch(/^390x[3-9]\d{2}$/);
  const portrait=Number(await page.locator('#game').getAttribute('data-camera-zoom'));
  expect(portrait).toBeGreaterThanOrEqual(.38);
  await testInfo.attach('portrait-v061.png',{body:await page.screenshot(),contentType:'image/png'});
  await page.setViewportSize({width:844,height:390});
- await expect.poll(async()=>await page.locator('#game').getAttribute('data-viewport')).toMatch(/^844x[2-9]\\d{2}$/);
+ await expect.poll(async()=>await page.locator('#game').getAttribute('data-viewport')).toMatch(/^844x[2-9]\d{2}$/);
  const landscape=Number(await page.locator('#game').getAttribute('data-camera-zoom'));
  expect(landscape).toBeGreaterThanOrEqual(.38);
  await page.locator('#map-open').click();
