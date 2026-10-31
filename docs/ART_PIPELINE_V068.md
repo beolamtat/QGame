@@ -4,8 +4,8 @@
 - Four **actual binary WebP files** committed using the GitHub Git Blob/Tree API (no Base64 in JavaScript): `public/assets/hero-v068.webp`, `props-v068.webp`, `farm-v068.webp`, `cafe-v068.webp`.
 - Hero: 24 frames (8 directions × 3 poses), 40×56 each, 960×56 total, 238 bytes.
 - Props: 6 frames, 48×56 each, 288×56 total, 468 bytes.
-- Farm and café review plates: each 800×500, 1090 and 1190 bytes.
-- **Total compressed binary size: 2986 bytes**. All images are lossless WebP; browser decode and RIFF/WEBP headers verified in Playwright.
+- Farm and café review plates: each 800×500, 1090 and 400 bytes.
+- **Total compressed binary size: 2196 bytes**. All images are lossless WebP; browser decode and RIFF/WEBP headers verified in Playwright.
 - Phaser preload registers named frames on the binary textures; hero and props are scaled ×2, backgrounds stretched to the original 1600×1000 world, preserving gameplay hit areas and world coordinates.
 - Existing Canvas2D illustrated art remains the default. The binary replacement is available at **`/?art=webp`** for screenshot comparison. This is intentional: the new ultra-small placeholder plates are not artist-approved and would visibly downgrade the existing artwork if enabled globally.
 - E2E checks both art paths, binary file sizes, decoded dimensions, frame counts, browser screenshots, and scene transitions.
