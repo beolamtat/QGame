@@ -40,7 +40,7 @@ export function createWorldMap(wallet:Wallet,onChange:()=>void,onNotice:(message
   else{
    const income=ticks*c.income*branch.level;
    add('💰 Thu nhập · '+income+' xu',()=>{const earned=collectIncome(expansion,wallet,c.id);if(earned){persist();onNotice('Nhận '+earned+' xu')}else onNotice('Chưa đến kỳ thu nhập')},income===0);
-   if(branch.level<5)add('⬆ Nâng cấp · '+(c.branchCost*(branch.level+1))+' xu',()=>{if(upgradeBranch(expansion,wallet,c.id)){persist();onNotice('Nâng cấp thành công')}else onNotice('Không đủ xu')},wallet.coins<c.branchCost*(branch.level+1));
+   if(branch.level<5)add('⬆ Nâng cấp · '+(Math.max(100,c.branchCost)*(branch.level+1))+' xu',()=>{if(upgradeBranch(expansion,wallet,c.id)){persist();onNotice('Nâng cấp thành công')}else onNotice('Không đủ xu')},wallet.coins<c.branchCost*(branch.level+1));
    if(c.id!=='vn'){
     if(shipment)add(seconds?'🚚 Đang vận chuyển · '+seconds+'s':'📦 Nhận hàng · +'+c.shipmentReward+' xu',()=>{if(!claimShipment(expansion,wallet,c.id))onNotice('Chưa giao tới');else{persist();onNotice('Đã nhận '+c.shipmentReward+' xu')}},seconds>0);
     else add('🚚 Gửi 5 hạt rang',()=>{if(sendShipment(expansion,wallet,c.id)){persist();onNotice('Xe vận chuyển đã xuất phát')}else onNotice('Cần 5 hạt rang')},wallet.roasted<5);
