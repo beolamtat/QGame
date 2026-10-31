@@ -28,12 +28,12 @@ class World extends Phaser.Scene{
     this.drawZone('farm');
     this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{
       const pos=this.cameras.main.getWorldPoint(p.x,p.y);
-      const near=this.objects.filter(o=>Phaser.Math.Distance.Between(o.x,o.y,pos.x,pos.y)<85).sort((a,b)=>Phaser.Math.Distance.Between(a.x,a.y,pos.x,pos.y)-Phaser.Math.Distance.Between(b.x,b.y,pos.x,pos.y))[0];
+      const near=this.objects.filter(o=>Phaser.Math.Distance.Between(o.x,o.y,pos.x,pos.y)<110).sort((a,b)=>Phaser.Math.Distance.Between(a.x,a.y,pos.x,pos.y)-Phaser.Math.Distance.Between(b.x,b.y,pos.x,pos.y))[0];
       this.pending=near;
       const x=near?near.x:pos.x,y=near?near.y:pos.y;
       this.target=new Phaser.Math.Vector2(Phaser.Math.Clamp(x,45,1555),Phaser.Math.Clamp(y,175,940));
     });
-    action.onclick=()=>this.drawZone(this.zone==='farm'?'cafe':'farm');
+    action.onclick=()=>{if(this.busy){toast('Đang pha chế, vui lòng đợi');return}this.drawZone(this.zone==='farm'?'cafe':'farm')};
     extra.onclick=()=>{if(this.zone==='farm'){if(roast(state)){toast('Đã rang 3 hạt cà phê 🔥')}else toast('Cần 3 hạt cà phê tươi')}else{if(upgrade(state)){toast('Quán lên cấp '+state.level+'! ✨')}else toast('Cần '+100*state.level+' xu để nâng cấp')}sync()};
     this.scale.on('resize',()=>this.adjustCamera());
     this.adjustCamera();
@@ -43,7 +43,7 @@ class World extends Phaser.Scene{
   rect(x:number,y:number,w:number,h:number,c:number){return this.add.rectangle(x,y,w,h,c)}
   makePerson(x:number,y:number,color:number){const shadow=this.add.ellipse(0,22,44,16,0x273b2e,.3),legs=this.rect(0,11,24,24,0x443c50),body=this.rect(0,-13,34,40,color),face=this.circle(0,-44,22,0xffd4a4),hair=this.add.ellipse(0,-61,46,24,0x4b322e),hat=this.add.ellipse(0,-72,58,14,0xd5a65b),eyes=this.add.text(-11,-48,'• •',{fontSize:'13px',color:'#30231d'});return this.add.container(x,y,[shadow,legs,body,face,hair,hat,eyes]).setDepth(y)}
   drawZone(zone:Zone){
-    this.tweens.killAll();this.children.removeAll(true);
+    this.tweens.killAll();this.time.removeAllEvents();this.children.removeAll(true);
     this.zone=zone;this.target=undefined;this.pending=undefined;this.objects=[];this.visuals=[];this.customerActors=[];this.busy=false;
     this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
     decorateWorld(this,zone);
@@ -81,7 +81,7 @@ class World extends Phaser.Scene{
     state.orders.forEach((order,i)=>{
       const x=380+i*230,y=790;
       const actor=this.makePerson(x,y,([0xbd668c,0x7687b4,0x78a45e,0xc58a55][i%4]));
-      this.add.text(x-54,y-112,RECIPES[order.recipe].name,{fontSize:'19px',color:'#fff',backgroundColor:'#76513c',padding:{x:5,y:3}}).setDepth(1000);
+      const nameplate=this.add.text(0,-112,RECIPES[order.recipe].name,{fontSize:'19px',color:'#fff',backgroundColor:'#76513c',padding:{x:5,y:3}});actor.add(nameplate);
       this.customerActors.push({order,actor,homeX:x,homeY:y});
       this.objects.push({x,y,kind:'customer',index:order.id});
       this.tweens.add({targets:actor,x:x+16,duration:1200+i*100,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
@@ -111,7 +111,7 @@ class World extends Phaser.Scene{
     }
     if(!this.target||this.busy)return;
     const dx=this.target.x-this.player.x,dy=this.target.y-this.player.y,d=Math.hypot(dx,dy),step=Math.min(d,delta*.23);
-    if(d>42){this.player.x+=dx/d*step;this.player.y+=dy/d*step;this.player.setDepth(this.player.y+10)}
+    if(d>56){this.player.x+=dx/d*step;this.player.y+=dy/d*step;this.player.setDepth(this.player.y+10)}
     else{this.target=undefined;if(this.pending){const obj=this.pending;this.pending=undefined;this.interact(obj)}}
   }
   interact(obj:Interact){
@@ -128,11 +128,11 @@ class World extends Phaser.Scene{
       const order=state.orders[0];if(!order){toast('Chưa có đơn hàng');return}
       if(!brew(state,order.recipe)){toast('Thiếu nguyên liệu! Mua thêm sữa/sô-cô-la ở nút Nâng cấp');return}
       this.busy=true;toast('Đang pha '+RECIPES[order.recipe].name+'...');
-      this.time.delayedCall(RECIPES[order.recipe].brewMs,()=>{state.drinks++;this.busy=false;toast('Pha chế xong! Mang tới khách ☕');sync()});sync();
+      this.time.delayedCall(RECIPES[order.recipe].brewMs,()=>{state.prepared.push(order.recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha '+RECIPES[order.recipe].name+'! ☕');sync()});sync();
     }else if(obj.kind==='customer'){
       const order=state.orders.find(o=>o.id===obj.index);if(!order)return;
-      if(serve(state,order)){toast('Đã phục vụ '+RECIPES[order.recipe].name+'! +'+RECIPES[order.recipe].price+' xu');this.refreshCustomers()}
-      else toast('Chưa có đồ uống hoặc khách đã rời quán');sync();
+      if(serve(state,order)){toast('Đã phục vụ '+RECIPES[order.recipe].name+'! +'+(RECIPES[order.recipe].price+5*(state.level-1))+' xu');this.refreshCustomers()}
+      else toast('Chưa pha đúng món '+RECIPES[order.recipe].name+' hoặc khách đã rời quán');sync();
     }
   }
 }
