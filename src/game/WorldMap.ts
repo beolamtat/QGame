@@ -1,6 +1,6 @@
 import {COUNTRIES,normalizeExpansion,unlock,buildBranch,sendShipment,claimShipment,collectIncome,upgradeBranch,INCOME_INTERVAL_MS,type CountryId,type Expansion,type Wallet} from './Expansion';
 const SAVE_KEY='coffee-world-expansion-v01';
-export function createWorldMap(wallet:Wallet,onChange:()=>void,onNotice:(message:string)=>void){
+export function createWorldMap(wallet:Wallet,onChange:()=>void,onNotice:(message:string)=>void,onVisibility?:(open:boolean)=>void){
  let expansion:Expansion;
  try{expansion=normalizeExpansion(JSON.parse(localStorage.getItem(SAVE_KEY)||'null'))}catch{expansion=normalizeExpansion(null)}
  const overlay=document.createElement('section');overlay.id='world-map';overlay.setAttribute('aria-label','Bản đồ thế giới Coffee World');
@@ -8,11 +8,10 @@ export function createWorldMap(wallet:Wallet,onChange:()=>void,onNotice:(message
  document.body.append(overlay);
  let selected:CountryId='vn';
  let opened=false;
- const persist=()=>{localStorage.setItem(SAVE_KEY,JSON.stringify(expansion));onChange()};
+ const persist=()=>{try{localStorage.setItem(SAVE_KEY,JSON.stringify(expansion))}catch{ /* Continue in memory if storage is blocked */ }onChange()};
  const detail=overlay.querySelector<HTMLElement>('#world-detail')!;
  const pins=overlay.querySelector<HTMLElement>('#world-pins')!;
- const canvas=overlay.querySelector<HTMLElement>('#world-canvas')!;
- const close=()=>{opened=false;overlay.classList.remove('visible')};
+ const close=()=>{opened=false;overlay.classList.remove('visible');onVisibility?.(false)};
  overlay.querySelector<HTMLButtonElement>('#map-close')!.onclick=close;
  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
  function render(){
@@ -49,5 +48,5 @@ export function createWorldMap(wallet:Wallet,onChange:()=>void,onNotice:(message
   }
   const foot=document.createElement('small');foot.textContent='Thu nhập: '+c.income+' xu/phút/cấp · Thưởng giao hàng: '+c.shipmentReward+' xu';detail.append(foot);
  }
- return {open(){opened=true;overlay.classList.add('visible');render()},close,refresh(){if(opened)render()},getState(){return expansion}};
+ return {open(){opened=true;overlay.classList.add('visible');onVisibility?.(true);render()},close,refresh(){if(opened)render()},getState(){return expansion}};
 }
