@@ -8,6 +8,7 @@ type Zone='farm'|'cafe'|'town';
 type Hotspot={x:number,y:number,kind:'plot'|'roaster'|'counter'|'customer'|'npc'|'merchant'|'cultivate',index?:number};
 const state:State=load();
 let story:Story=loadStory();
+const cultivation=loadCultivation();
 let zone:Zone='farm';
 const app=document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML=`
@@ -47,7 +48,7 @@ function showStory(){
  el('dialog-next').textContent=chapter.button;
  el('path-choices').hidden=story.chapter!=='ascension';el('dialog').hidden=false;
 }
-function setZone(next:Zone){zone=next;el('zone-label').textContent=next==='farm'?'Nông trại':next==='cafe'?'Quán cà phê':'Thị trấn';document.querySelectorAll('[data-zone]').forEach(b=>b.classList.toggle('selected',(b as HTMLElement).dataset.zone===next));world.drawZone(next);sync()}
+function setZone(next:Zone){zone=next;if(next==='town'){cultivation.townVisits++;saveCultivation(cultivation)}el('zone-label').textContent=next==='farm'?'Nông trại':next==='cafe'?'Quán cà phê':'Thị trấn';document.querySelectorAll('[data-zone]').forEach(b=>b.classList.toggle('selected',(b as HTMLElement).dataset.zone===next));world.drawZone(next);sync()}
 class World extends Phaser.Scene{
  hero!:Phaser.GameObjects.Container;target?:Phaser.Math.Vector2;pending?:Hotspot;hotspots:Hotspot[]=[];busy=false;mapOpen=false;
  constructor(){super('coffee-world')}
@@ -147,6 +148,17 @@ class World extends Phaser.Scene{
   if(d>50){this.hero.x+=dx/d*step;this.hero.y+=dy/d*step;this.hero.setDepth(this.hero.y);return}
   this.target=undefined;if(this.pending){const pending=this.pending;this.pending=undefined;this.interact(pending)}
  }
+ guidedBrew(recipe:keyof typeof RECIPES){
+  let step=0;
+  const show=()=>{
+   const current=BREW_STEPS[step];
+   drawer('☕ '+RECIPES[recipe].name+' · '+(step+1)+'/5',`<strong>${current[1]}</strong><p>${current[2]}</p><button id="brew-step">${step===4?'Hoàn thành ly cà phê':'Tiếp tục thao tác'}</button>`);
+   document.getElementById('brew-step')!.onclick=()=>{
+    step++;if(step<BREW_STEPS.length){show();return}
+    el('drawer').hidden=true;state.prepared.push(recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha xong! Chạm khách để phục vụ');sync();
+   };
+  };show();
+ }
  interact(h:Hotspot){
   if(h.kind==='plot'){
    const p=state.plots[h.index!];let message='';
@@ -158,14 +170,13 @@ class World extends Phaser.Scene{
   else if(h.kind==='counter'){
    const order=state.orders[0];if(!order){toast('Chưa có đơn');return}
    if(!brew(state,order.recipe)){toast('Thiếu nguyên liệu — mở Túi đồ để nhập hàng');return}
-   this.busy=true;toast('Đang pha '+RECIPES[order.recipe].name);
-   this.time.delayedCall(RECIPES[order.recipe].brewMs,()=>{state.prepared.push(order.recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha xong! Chạm vào khách để phục vụ');sync()});
+   this.busy=true;this.guidedBrew(order.recipe);
   }else if(h.kind==='customer'){
    const order=state.orders.find(o=>o.id===h.index);
    if(order&&serve(state,order)){toast('Phục vụ thành công! +'+RECIPES[order.recipe].price+' xu');this.drawZone('cafe')}else toast('Hãy pha đúng món tại quầy trước');
   }else if(h.kind==='npc')drawer('Sư phụ Linh Mộc','Đạo hữu hãy tu tâm dưỡng tính, chăm sóc linh điền và khám phá bí mật của từng hạt cà phê.');
   else if(h.kind==='merchant')drawer('Thương nhân','Giao thương mở ra những vùng đất mới. Hãy thu hoạch cà phê, rang hạt và mở Bản đồ thế giới.');
-  else drawer('Tu luyện linh khí','Hấp thụ linh khí từ linh điền. Hệ thống cảnh giới và công pháp chuyên sâu sẽ mở rộng trong các chương tiếp theo.');
+  else{drawer('🔮 Tu luyện · '+REALMS[cultivation.realm],`Linh khí: ${cultivation.qi} · Số lần tu luyện: ${cultivation.practice}<p><button id="practice-qi">Ngồi thiền · +10 linh khí</button></p>`);document.getElementById('practice-qi')!.onclick=()=>{toast(practice(cultivation));el('drawer').hidden=true}}
   sync();
  }
 }
@@ -184,7 +195,7 @@ el('daily-tab').onclick=()=>{daily=true;el('daily-tab').classList.add('active');
 document.querySelectorAll<HTMLButtonElement>('[data-ui]').forEach(b=>b.onclick=()=>{
  const id=b.dataset.ui;
  if(id==='bag')drawer('🎒 Túi đồ',`Hạt tươi: ${state.beans} · Hạt rang: ${state.roasted} · Sữa: ${state.milk} · Sô-cô-la: ${state.chocolate}<p><button id="restock">Nhập nguyên liệu · 20 xu</button></p>`);
- else if(id==='skills')drawer('📖 Kỹ năng','🌱 Linh điền · ☕ Pha chế · 🔮 Tu luyện. Nâng cấp kỹ năng qua nhiệm vụ và cấp độ.');
+ else if(id==='skills')drawer('📖 Kỹ năng',`🌱 Linh điền · ☕ Pha chế · 🔮 ${REALMS[cultivation.realm]}<p>Linh khí: ${cultivation.qi} · Tu luyện: ${cultivation.practice} lần</p>`);
  else if(id==='workers')drawer('👥 Nhân viên','Tuyển và phân công nhân viên tại quán cà phê khi đạt cấp độ cao hơn.');
  else drawer('⚙️ Quản lý',`Cấp quán: ${state.level}<p><button id="upgrade">Nâng cấp quán · ${state.level*100} xu</button></p>`);
  const restockButton=document.getElementById('restock');if(restockButton)restockButton.onclick=()=>{toast(restock(state)?'Đã nhập hàng':'Không đủ xu');sync();el('drawer').hidden=true};
