@@ -78,6 +78,7 @@ class World extends Phaser.Scene{
       this.refreshCustomers();
     }
     this.hero=createCharacter(this,800,750,0x367f9b);
+    if(host)host.dataset.heroAtlasFrames='24';
     this.player=this.hero.root;
     this.adjustCamera();
     action.textContent=zone==='farm'?'Đến quán ☕':'Về nông trại 🌱';
