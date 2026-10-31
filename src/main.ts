@@ -53,6 +53,7 @@ function setZone(next:Zone){zone=next;if(next==='town'){cultivation.townVisits++
 class World extends Phaser.Scene{
  hero!:Phaser.GameObjects.Container;target?:Phaser.Math.Vector2;pending?:Hotspot;hotspots:Hotspot[]=[];busy=false;mapOpen=false;
  constructor(){super('coffee-world')}
+ preload(){for(const zone of ['farm','cafe','town'])this.load.svg('illustrated-'+zone,'/assets/redesign-'+zone+'.svg',{width:1600,height:1000})}
  create(){
   this.drawZone('farm');
   this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
@@ -76,7 +77,13 @@ class World extends Phaser.Scene{
    g.fillPoints([{x,y:y+56},{x:x+56,y:y+28},{x:x+112,y:y+56},{x:x+56,y:y+84}],true);
    g.lineStyle(1,0x463d2b,.10);g.strokePoints([{x,y:y+56},{x:x+56,y:y+28},{x:x+112,y:y+56},{x:x+56,y:y+84}],true);
   }
-  if(farm)this.drawFarm(g);else if(cafe)this.drawCafe(g);else this.drawTown(g);
+  const texture='illustrated-'+next;
+  if(this.textures.exists(texture)){
+   this.add.image(0,0,texture).setOrigin(0).setDepth(-150);
+   if(farm){for(let i=0;i<12;i++)this.hotspots.push({x:235+(i%4)*200,y:280+Math.floor(i/4)*175,kind:'plot',index:i});this.hotspots.push({x:1330,y:600,kind:'roaster'});}
+   else if(cafe){this.hotspots.push({x:900,y:450,kind:'counter'});if(!state.orders.length)newOrder(state);state.orders.forEach((order,i)=>this.hotspots.push({x:220+i*290,y:780,kind:'customer',index:order.id}));}
+   else{this.hotspots.push({x:680,y:350,kind:'npc'},{x:1060,y:530,kind:'merchant'},{x:550,y:780,kind:'cultivate'});}
+  }else if(farm)this.drawFarm(g);else if(cafe)this.drawCafe(g);else this.drawTown(g);
   this.hero=this.person(790,780,0x386f91,true);this.hero.setDepth(790);
   this.fitCamera();
   el('game').dataset.zone=next;renderQuests();renderInventory();
