@@ -35,3 +35,8 @@ export function recipeLabel(scene:Phaser.Scene,id:string):Phaser.GameObjects.Ima
  registerLabelAtlas(scene);
  return scene.add.image(0,-112,LABEL_ATLAS_KEY,'recipe-'+id).setOrigin(.5);
 }
+
+export function zoneSign(scene:Phaser.Scene,zone:'farm'|'cafe',x:number,y:number):Phaser.GameObjects.Image{
+ registerLabelAtlas(scene);
+ return scene.add.image(x,y,LABEL_ATLAS_KEY,zone+'-sign').setOrigin(.5).setDepth(400);
+}
