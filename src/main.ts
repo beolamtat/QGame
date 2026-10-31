@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import './style.css';
+import {createWorldMap} from './game/WorldMap';
 import {decorateWorld} from './game/WorldArt';
 import {load,persist,grow,plant,water,harvest,roast,brew,serve,upgrade,restock,newOrder,RECIPES,type RecipeId,type Order,type State} from './game/Economy';
 
 const state:State=load();
 const app=document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML=`<div id="game"></div><div id="hud"><div id="top"><span>☕ COFFEE WORLD · LV <b id="level">1</b></span><span id="stats"></span></div><div id="toast"></div><div id="orders" class="panel"></div><div id="bottom"><span class="panel" id="help">Chạm để di chuyển và tương tác</span><div id="controls"><button id="extra">Nâng cấp</button><button id="action">Đến quán ☕</button></div></div></div>`;
+app.innerHTML=`<div id="game"></div><div id="hud"><div id="top"><span>☕ COFFEE WORLD · LV <b id="level">1</b></span><span id="stats"></span></div><div id="toast"></div><div id="orders" class="panel"></div><div id="bottom"><span class="panel" id="help">Chạm để di chuyển và tương tác</span><div id="controls"><button id="map-open">🌏 Bản đồ</button><button id="extra">Nâng cấp</button><button id="action">Đến quán ☕</button></div></div></div>`;
 const el=(id:string)=>document.getElementById(id)!;
 const stats=el('stats'),toastEl=el('toast'),ordersEl=el('orders'),help=el('help'),action=el('action') as HTMLButtonElement,extra=el('extra') as HTMLButtonElement;
 let toastTimer=0;
@@ -138,4 +139,6 @@ class World extends Phaser.Scene{
 }
 const game=new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#9bd4a0',scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},render:{pixelArt:false,antialias:true},scene:[World]});
 const refreshOrders=()=>{if(!game.scene.isActive('world'))return;const scene=game.scene.getScene('world') as World;ordersEl.style.display=scene.zone==='cafe'?'block':'none';ordersEl.innerHTML=scene.zone==='cafe'?`📋 ĐƠN HÀNG <small>(còn ${state.orders.length})</small><div>${state.orders.map(o=>`<span>${RECIPES[o.recipe].name} · ${Math.max(0,Math.ceil((o.expiresAt-Date.now())/1000))}s</span>`).join('')}</div><button id="restock">🥛 Nhập nguyên liệu · 20 xu</button>`:'';const btn=document.querySelector<HTMLButtonElement>('#restock');if(btn)btn.onclick=()=>{toast(restock(state)?'Đã mua sữa và sô-cô-la':'Không đủ 20 xu');sync()}};
-window.setInterval(refreshOrders,1000);sync();
+const worldMap=createWorldMap(state,sync,toast);
+(document.getElementById('map-open') as HTMLButtonElement).onclick=()=>worldMap.open();
+window.setInterval(()=>{refreshOrders();worldMap.refresh()},1000);sync();
