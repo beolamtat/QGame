@@ -1,3 +1,5 @@
+> **ARCHIVED IMPLEMENTATION SNAPSHOT.** This file documents the earlier prototype only. The current product requirements, full screen inventory, interactive brewing minigames and acceptance gates are in [COFFEE_WORLD_MASTER_GDD_V2.md](./COFFEE_WORLD_MASTER_GDD_V2.md). Do not treat phases 1–4 below as a finished game or a design specification.
+
 # Coffee World Redesign — Phases 1–4
 
 ## Design target
