@@ -54,6 +54,26 @@ function farm(c:C){
  // Path edging and subtle ambient shadows.
  line(c,694,5,694,975,'rgba(117,94,58,.28)',7);
  line(c,897,5,897,975,'rgba(255,251,218,.4)',6);
+ // Orchard border, layered canopy shadows and tiny flowers keep the mobile crop area readable.
+ for(let i=0;i<20;i++){
+  const x=68+(i%10)*160,y=i<10?65:955;
+  oval(c,x+6,y+12,42,12,'rgba(52,91,55,.2)');
+  oval(c,x,y,39,29,i%3===0?'#3e865e':i%3===1?'#559c6a':'#72b879');
+  oval(c,x-15,y-11,24,18,'#8dcb85');
+  oval(c,x+16,y-7,21,15,'#61a66d');
+  for(let j=0;j<4;j++)oval(c,x-19+j*12,y-9+(j%2)*10,3,3,j%2?'#fff3c9':'#e8a6a1');
+ }
+ // Roof shingles and side-wall window trims on the roastery.
+ for(let i=0;i<9;i++)line(c,1236+i*39,125-i%2*8,1265+i*37,115-i%2*8,'rgba(255,216,160,.35)',3);
+ rr(c,1301,175,42,52,5,'#755644');rr(c,1307,181,30,39,4,'#b2d1b8');
+ line(c,1322,181,1322,220,'#9c7754',4);
+ // Soil, clover and pebbles are deterministic (no random allocation per frame).
+ for(let i=0;i<230;i++){
+  const x=(i*397+29)%1530+35,y=(i*283+73)%930+35;
+  if((x>670&&x<905)||(x>990&&y>615&&y<870))continue;
+  if(i%3===0)oval(c,x,y,3,2,'rgba(249,233,180,.55)');
+  else{line(c,x,y,x+4,y-6,'rgba(47,112,68,.23)',2);line(c,x,y,x-3,y-4,'rgba(47,112,68,.2)',2)}
+ }
 }
 function cafe(c:C){
  const floor=c.createLinearGradient(0,0,W,H);floor.addColorStop(0,'#f1d9a9');floor.addColorStop(1,'#c69b74');c.fillStyle=floor;c.fillRect(0,0,W,H);
@@ -98,6 +118,32 @@ function cafe(c:C){
  }
  // Welcome rug at the lower edge, leaves room for existing customers.
  rr(c,480,906,650,69,22,'#7c9e83');rr(c,494,917,622,46,16,'#a8c6a0');
+ // Shelves, ceramics and green vines establish a cozy handcrafted café atmosphere.
+ for(const x of [60,1500]){
+  rr(c,x-28,225,56,8,3,'#926646');
+  rr(c,x-28,317,56,8,3,'#926646');
+  for(const y of [210,302]){
+   rr(c,x-18,y-29,35,26,7,'#e8d1a6');
+   oval(c,x,y-32,21,12,'#54906b');
+   for(let i=0;i<4;i++)oval(c,x-12+i*8,y-38-(i%2)*9,8,13,'#77b787');
+  }
+ }
+ for(let i=0;i<18;i++){
+  const x=40+i*89,y=177+(i%2)*3;
+  rr(c,x,y,35,6,3,'rgba(255,242,207,.38)');
+ }
+ // Brass feet and detailed wood grain on the customer seating.
+ for(const x of [250,500,750,1000,1250]){
+  for(const dx of [-85,85]){
+   line(c,x+dx-16,643,x+dx-16,682,'#765342',5);
+   line(c,x+dx+16,643,x+dx+16,682,'#765342',5);
+  }
+  for(let i=0;i<4;i++)line(c,x-43+i*22,650,x-29+i*22,657,'rgba(130,87,53,.18)',2);
+ }
+ // Woven carpet trim and diagonal light pools.
+ for(let i=0;i<16;i++)line(c,507+i*38,935,525+i*38,950,'rgba(247,239,194,.22)',3);
+ oval(c,300,450,260,100,'rgba(255,246,195,.08)');
+ oval(c,1250,470,260,100,'rgba(255,246,195,.08)');
 }
 export function registerEnvironment(scene:Phaser.Scene,zone:'farm'|'cafe'):void{
  const key=ENV_KEY[zone];if(scene.textures.exists(key))return;
@@ -108,5 +154,6 @@ export function registerEnvironment(scene:Phaser.Scene,zone:'farm'|'cafe'):void{
 }
 export function placeEnvironment(scene:Phaser.Scene,zone:'farm'|'cafe'):void{
  registerEnvironment(scene,zone);
- scene.add.image(W/2,H/2,ENV_KEY[zone]).setDepth(-700);
+ const image=scene.add.image(W/2,H/2,ENV_KEY[zone]).setDepth(-700);
+ if(image.width!==W||image.height!==H)image.setDisplaySize(W,H);
 }
