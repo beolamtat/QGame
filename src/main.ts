@@ -33,6 +33,9 @@ class World extends Phaser.Scene{
   perfFrames=0;
   perfMs=0;
   perfLast=0;
+  plotLabels:Phaser.GameObjects.Text[]=[];
+  plotStages:string[]=[];
+  staticLabels:Phaser.GameObjects.Text[]=[];
   constructor(){super('world')}
   create(){
     this.drawZone('farm');
@@ -54,7 +57,10 @@ class World extends Phaser.Scene{
   rect(x:number,y:number,w:number,h:number,c:number){return this.add.rectangle(x,y,w,h,c)}
   makePerson(x:number,y:number,color:number){const shadow=this.add.ellipse(0,22,44,16,0x273b2e,.3),legs=this.rect(0,11,24,24,0x443c50),body=this.rect(0,-13,34,40,color),face=this.circle(0,-44,22,0xffd4a4),hair=this.add.ellipse(0,-61,46,24,0x4b322e),hat=this.add.ellipse(0,-72,58,14,0xd5a65b),eyes=this.add.text(-11,-48,'• •',{fontSize:'13px',color:'#30231d'});return this.add.container(x,y,[shadow,legs,body,face,hair,hat,eyes]).setDepth(y)}
   drawZone(zone:Zone){
-    this.tweens.killAll();this.time.removeAllEvents();this.children.removeAll(true);
+    this.tweens.killAll();this.time.removeAllEvents();
+    // Destroy each display object once; avoid retaining previous scene labels or tweens.
+    this.children.removeAll(true);
+    this.plotLabels=[];this.plotStages=[];this.staticLabels=[];
     this.zone=zone;this.target=undefined;this.pending=undefined;this.objects=[];this.visuals=[];this.customerActors=[];this.busy=false;
     this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
     decorateWorld(this,zone);
@@ -69,6 +75,7 @@ class World extends Phaser.Scene{
         const crop=makeCoffeePlant(this,0,0);
         const obj=this.add.container(x,y,[crop,label]).setDepth(y);
         this.visuals.push(obj);
+        this.plotLabels.push(label);
       }
       this.objects.push({x:1380,y:300,kind:'roaster'});
       this.add.text(1280,280,'🔥 LÒ RANG',{fontSize:'24px',color:'#fff3c7',backgroundColor:'#704b36'}).setDepth(400);
@@ -112,7 +119,11 @@ class World extends Phaser.Scene{
       const crop=o.list[0] as Phaser.GameObjects.Sprite;
       const label=o.list[1] as Phaser.GameObjects.Text;
       if(crop.frame.name!==p.stage)crop.setFrame(p.stage);
-      label.setText(p.stage==='empty'?'🌱 Trồng':p.stage==='seed'?'💧 Tưới':p.stage==='growing'?'⏳ Đang lớn':'🫘 Thu hoạch');
+      // Phaser.Text re-rasterizes its canvas on setText. Skip unchanged labels.
+      if(this.plotStages[i]!==p.stage){
+        label.setText(p.stage==='empty'?'🌱 Trồng':p.stage==='seed'?'💧 Tưới':p.stage==='growing'?'⏳ Đang lớn':'🫘 Thu hoạch');
+        this.plotStages[i]=p.stage;
+      }
     });
   }
   update(time:number,delta:number){
