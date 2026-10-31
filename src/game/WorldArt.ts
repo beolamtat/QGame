@@ -7,6 +7,11 @@ import Phaser from 'phaser';
 export function decorateWorld(scene:Phaser.Scene, zone:'farm'|'cafe'):void {
   const g=scene.add.graphics();
   if(zone==='farm'){
+    // Broad paths and material variation rendered in one batched Graphics object.
+    g.fillStyle(0x83ba77,.35).fillRoundedRect(55,180,570,665,38);
+    g.fillStyle(0x7cb06c,.35).fillRoundedRect(935,180,520,665,38);
+    g.fillStyle(0xf5e5ba,.75).fillRoundedRect(80,865,1390,64,22);
+    g.lineStyle(4,0xc5a26f,.45).strokeRoundedRect(80,865,1390,64,22);
     // Curved paths and soft earth beds
     g.fillStyle(0xeed4a3).fillRoundedRect(705,0,185,1000,32);
     g.fillStyle(0xd8b780,.55).fillRoundedRect(720,0,12,1000,6);
@@ -31,6 +36,14 @@ export function decorateWorld(scene:Phaser.Scene, zone:'farm'|'cafe'):void {
       g.fillStyle(c,.8).fillCircle(x,y,i%5===0?4:2);
       g.lineStyle(2,0x589464,.65).lineBetween(x-5,y+5,x,y-4);
     }
+    // Berry baskets, signage and warm lanterns around the workshop.
+    for(const x of [1210,1505]){
+      g.fillStyle(0xe7bf71,.7).fillCircle(x,190,16);
+      g.lineStyle(3,0xffe2a1,.65).strokeCircle(x,190,20);
+    }
+    g.fillStyle(0x9d6c42).fillRoundedRect(1100,410,125,72,12);
+    g.fillStyle(0xf1d9a2).fillRoundedRect(1112,421,101,49,8);
+    g.lineStyle(3,0x7e503a,.7).strokeRoundedRect(1112,421,101,49,8);
     // Garden fence
     for(const x of [40,1570]){
       for(let y=80;y<940;y+=50){
@@ -75,6 +88,17 @@ export function decorateWorld(scene:Phaser.Scene, zone:'farm'|'cafe'):void {
       g.fillStyle(0x82958d).fillRoundedRect(x-34,124,68,64,9);
       g.fillStyle(0xd9d7c5).fillRoundedRect(x-23,130,46,25,4);
       g.fillStyle(0x4e4946).fillCircle(x,172,8);
+    }
+    // Espresso station backsplash, menu board and pendant lights.
+    g.fillStyle(0x3f5045).fillRoundedRect(1225,190,260,175,14);
+    g.lineStyle(6,0xe4b778,.9).strokeRoundedRect(1225,190,260,175,14);
+    for(let i=0;i<4;i++){
+      g.fillStyle(0xe7d4a5,.75).fillRoundedRect(1250,216+i*32,170-i*11,6,3);
+    }
+    for(const x of [330,800,1280]){
+      g.lineStyle(4,0x665244,.8).lineBetween(x,0,x,75);
+      g.fillStyle(0xf7d68a,.85).fillEllipse(x,86,74,34);
+      g.fillStyle(0xffe6b3,.28).fillEllipse(x,103,105,40);
     }
     // Café seating with circular tables and chairs
     for(const x of [250,500,750,1000,1250]){
