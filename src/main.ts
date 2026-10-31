@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import './style.css';
 import {createWorldMap} from './game/WorldMap';
-import {decorateWorld} from './game/WorldArt';
+import {placeEnvironment} from './game/EnvironmentAtlas';
 import {placeProps} from './game/PropAtlas';
 import {registerLabelAtlas,plotLabel,recipeLabel,zoneSign} from './game/LabelAtlas';
 import {registerCoffeeAtlas,makeCoffeePlant} from './game/CoffeeAtlas';
@@ -62,11 +62,11 @@ class World extends Phaser.Scene{
     this.plotStages=[];
     this.zone=zone;this.target=undefined;this.pending=undefined;this.objects=[];this.visuals=[];this.customerActors=[];this.busy=false;
     this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
-    decorateWorld(this,zone);
+    placeEnvironment(this,zone);
     placeProps(this,zone);
     registerCoffeeAtlas(this);
     registerLabelAtlas(this);
-    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.propAtlasFrames='6';host.dataset.zone=zone}
+    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.propAtlasFrames='6';host.dataset.environmentAtlas='v065';host.dataset.zone=zone}
     if(zone==='farm'){
       for(let i=0;i<12;i++){
         const x=170+(i%4)*145+(i%4>=2?225:0),y=240+Math.floor(i/4)*205;
