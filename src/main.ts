@@ -140,7 +140,7 @@ class World extends Phaser.Scene{
   const camera=this.cameras.main;camera.setBounds(0,0,1600,1000);camera.setZoom(Math.max(.2,zoom));camera.startFollow(this.hero,true,.08,.08);
  }
  update(_time:number,delta:number){
-  if(zone==='farm'&&Math.random()<.015)grow(state);
+  if(zone==='farm')grow(state);
   if(zone==='cafe'&&state.orders.length===0){newOrder(state);this.drawZone('cafe');sync()}
   if(!this.target||this.busy||this.mapOpen)return;
   const dx=this.target.x-this.hero.x,dy=this.target.y-this.hero.y,d=Math.hypot(dx,dy),step=Math.min(d,delta*.24);
@@ -192,4 +192,4 @@ document.querySelectorAll<HTMLButtonElement>('[data-ui]').forEach(b=>b.onclick=(
 });
 el('quick-items').addEventListener('click',event=>{const button=(event.target as HTMLElement).closest<HTMLButtonElement>('[data-slot]');if(!button)return;const i=Number(button.dataset.slot);if(zone==='farm'&&i===3)toast(roast(state)?'Đã rang 3 hạt':'Cần 3 hạt cà phê');else if(zone==='cafe'&&i===3)toast(restock(state)?'Đã nhập nguyên liệu':'Không đủ xu');else toast('Chạm vào vật thể trong bản đồ để tương tác');sync()});
 window.setInterval(()=>{worldMap.refresh();if(zone==='farm'){grow(state);sync()}},2500);
-sync();setZone('farm');if(!story.seen&&story.chapter!=='complete')window.setTimeout(showStory,350);
+sync();document.querySelector('[data-zone="farm"]')?.classList.add('selected');if(!story.seen&&story.chapter!=='complete')window.setTimeout(showStory,350);
