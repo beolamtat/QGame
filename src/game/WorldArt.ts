@@ -28,6 +28,9 @@ export function decorateWorld(scene:Phaser.Scene, zone:'farm'|'cafe'):void {
         g.lineStyle(3,0xbca071,.7).strokeRoundedRect(x+10,y+16,288,68,25);
       }
     }
+    // Decorative layered grass bands and warm edge lighting.
+    g.fillStyle(0xc8e7a0,.18).fillRoundedRect(40,80,650,750,45);
+    g.lineStyle(5,0xf6e9bd,.32).strokeRoundedRect(705,0,185,1000,32);
     // Flowering grass, pebbles
     for(let i=0;i<105;i++){
       const x=(i*137+43)%1570+10,y=(i*83+77)%920+35;
@@ -55,6 +58,10 @@ export function decorateWorld(scene:Phaser.Scene, zone:'farm'|'cafe'):void {
     g.fillStyle(0x6b9d7b,.4).fillEllipse(1240,740,420,220);
     g.fillStyle(0x74c8c5).fillEllipse(1240,730,382,184);
     g.lineStyle(5,0xd9ead3,.7).strokeEllipse(1240,730,338,147);
+    for(let i=0;i<7;i++){
+      const x=1130+i*32,y=703+(i%3)*19;
+      g.lineStyle(3,0xf2fff0,.42).lineBetween(x,y,x+26,y-4);
+    }
     for(let i=0;i<10;i++){
       const x=1060+i*34,y=805+Math.sin(i)*16;
       g.lineStyle(3,0x4e8c51).lineBetween(x,y,x+5,y-22);
@@ -112,15 +119,7 @@ export function decorateWorld(scene:Phaser.Scene, zone:'farm'|'cafe'):void {
       g.fillStyle(0xfff2d4).fillCircle(x+14,622,15);
       g.fillStyle(0x8b5d42).fillCircle(x+14,622,10);
     }
-    // Potted plants along walls
-    for(const x of [65,1520]){
-      for(const y of [300,790]){
-        g.fillStyle(0xb9744c).fillRoundedRect(x-26,y,52,49,8);
-        for(let i=0;i<5;i++){
-          g.fillStyle(i%2?0x4c9962:0x69ad72).fillEllipse(x+(i-2)*11,y-22-(i%2)*12,32,70);
-        }
-      }
-    }
+    // Potted plants are shared textured sprites from PropAtlas, not Graphics objects.
   }
   g.setDepth(-500);
 }
