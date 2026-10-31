@@ -45,7 +45,7 @@ class World extends Phaser.Scene{
     this.scale.on('resize',()=>this.adjustCamera());
     this.adjustCamera();
   }
-  adjustCamera(){if(!this.player)return;const {width,height}=this.scale;const landscape=width>=height;const viewW=landscape?950:690,viewH=landscape?580:930;const zoom=Phaser.Math.Clamp(Math.min(width/viewW,height/viewH),.38,1.5);this.cameras.main.setBounds(0,0,1600,1000);this.cameras.main.setZoom(zoom);this.cameras.main.startFollow(this.player,true,.09,.09)}
+  adjustCamera(){if(!this.player)return;const {width,height}=this.scale;const landscape=width>=height;const viewW=landscape?950:690,viewH=landscape?580:930;const zoom=Phaser.Math.Clamp(Math.min(width/viewW,height/viewH),.38,1.5);this.cameras.main.setBounds(0,0,1600,1000);this.cameras.main.setZoom(zoom);const host=document.getElementById('game');if(host){host.dataset.cameraZoom=zoom.toFixed(3);host.dataset.viewport=width+'x'+height}this.cameras.main.startFollow(this.player,true,.09,.09)}
   circle(x:number,y:number,r:number,c:number){return this.add.circle(x,y,r,c)}
   rect(x:number,y:number,w:number,h:number,c:number){return this.add.rectangle(x,y,w,h,c)}
   makePerson(x:number,y:number,color:number){const shadow=this.add.ellipse(0,22,44,16,0x273b2e,.3),legs=this.rect(0,11,24,24,0x443c50),body=this.rect(0,-13,34,40,color),face=this.circle(0,-44,22,0xffd4a4),hair=this.add.ellipse(0,-61,46,24,0x4b322e),hat=this.add.ellipse(0,-72,58,14,0xd5a65b),eyes=this.add.text(-11,-48,'• •',{fontSize:'13px',color:'#30231d'});return this.add.container(x,y,[shadow,legs,body,face,hair,hat,eyes]).setDepth(y)}
@@ -55,6 +55,7 @@ class World extends Phaser.Scene{
     this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
     decorateWorld(this,zone);
     registerCoffeeAtlas(this);
+    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.zone=zone}
     if(zone==='farm'){
       for(let i=0;i<12;i++){
         const x=170+(i%4)*145+(i%4>=2?225:0),y=240+Math.floor(i/4)*205;
