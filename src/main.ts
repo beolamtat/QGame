@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import './style.css';
 import {createWorldMap} from './game/WorldMap';
 import {decorateWorld} from './game/WorldArt';
+import {registerCoffeeAtlas,makeCoffeePlant} from './game/CoffeeAtlas';
 import {createCharacter,updateCharacter,playAction,type CharacterRig} from './game/CharacterAnimation';
 import {floatingReward,interactionBurst,brewProgress} from './game/InteractionFX';
 import {load,persist,grow,plant,water,harvest,roast,brew,serve,upgrade,restock,newOrder,RECIPES,type RecipeId,type Order,type State} from './game/Economy';
@@ -44,7 +45,7 @@ class World extends Phaser.Scene{
     this.scale.on('resize',()=>this.adjustCamera());
     this.adjustCamera();
   }
-  adjustCamera(){if(!this.player)return;this.cameras.main.setZoom(Math.min(this.scale.width/900,this.scale.height/560)*1.12);this.cameras.main.startFollow(this.player,true,.09,.09);this.cameras.main.setBounds(0,0,1600,1000)}
+  adjustCamera(){if(!this.player)return;const {width,height}=this.scale;const landscape=width>=height;const viewW=landscape?950:690,viewH=landscape?580:930;const zoom=Phaser.Math.Clamp(Math.min(width/viewW,height/viewH),.38,1.5);this.cameras.main.setBounds(0,0,1600,1000);this.cameras.main.setZoom(zoom);this.cameras.main.startFollow(this.player,true,.09,.09)}
   circle(x:number,y:number,r:number,c:number){return this.add.circle(x,y,r,c)}
   rect(x:number,y:number,w:number,h:number,c:number){return this.add.rectangle(x,y,w,h,c)}
   makePerson(x:number,y:number,color:number){const shadow=this.add.ellipse(0,22,44,16,0x273b2e,.3),legs=this.rect(0,11,24,24,0x443c50),body=this.rect(0,-13,34,40,color),face=this.circle(0,-44,22,0xffd4a4),hair=this.add.ellipse(0,-61,46,24,0x4b322e),hat=this.add.ellipse(0,-72,58,14,0xd5a65b),eyes=this.add.text(-11,-48,'• •',{fontSize:'13px',color:'#30231d'});return this.add.container(x,y,[shadow,legs,body,face,hair,hat,eyes]).setDepth(y)}
@@ -53,14 +54,14 @@ class World extends Phaser.Scene{
     this.zone=zone;this.target=undefined;this.pending=undefined;this.objects=[];this.visuals=[];this.customerActors=[];this.busy=false;
     this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
     decorateWorld(this,zone);
+    registerCoffeeAtlas(this);
     if(zone==='farm'){
       for(let i=0;i<12;i++){
         const x=170+(i%4)*145+(i%4>=2?225:0),y=240+Math.floor(i/4)*205;
         this.objects.push({x,y,kind:'plot',index:i});
         const label=this.add.text(0,-90,'',{fontSize:'19px',color:'#fff3cb',backgroundColor:'#365c45',padding:{x:6,y:3}}).setOrigin(.5);
-        const leaves=this.circle(0,-35,35,0x3c9756),fruit=this.add.text(-26,-57,'🔴 🔴',{fontSize:'17px'});
-        const ground=this.add.ellipse(0,15,95,42,0x80573e,.7);
-        const obj=this.add.container(x,y,[ground,leaves,fruit,label]).setDepth(y);
+        const crop=makeCoffeePlant(this,0,0);
+        const obj=this.add.container(x,y,[crop,label]).setDepth(y);
         this.visuals.push(obj);
       }
       this.objects.push({x:1380,y:300,kind:'roaster'});
@@ -101,12 +102,9 @@ class World extends Phaser.Scene{
     if(state.plots.filter(p=>p.stage==='ripe').length!==before)sync();
     state.plots.forEach((p,i)=>{
       const o=this.visuals[i];if(!o)return;
-      const leaves=o.list[1] as Phaser.GameObjects.Arc;
-      const fruit=o.list[2] as Phaser.GameObjects.Text;
-      const label=o.list[3] as Phaser.GameObjects.Text;
-      leaves.setFillStyle(p.stage==='empty'?0x91633e:p.stage==='seed'?0x86a94f:p.stage==='growing'?0x5ba96c:0x358a4e);
-      leaves.setScale(p.stage==='empty'?.25:p.stage==='seed'?.45:p.stage==='growing'?.75:1);
-      fruit.setVisible(p.stage==='ripe');
+      const crop=o.list[0] as Phaser.GameObjects.Sprite;
+      const label=o.list[1] as Phaser.GameObjects.Text;
+      if(crop.frame.name!==p.stage)crop.setFrame(p.stage);
       label.setText(p.stage==='empty'?'🌱 Trồng':p.stage==='seed'?'💧 Tưới':p.stage==='growing'?'⏳ Đang lớn':'🫘 Thu hoạch');
     });
   }
@@ -146,7 +144,7 @@ class World extends Phaser.Scene{
     }
   }
 }
-const game=new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#9bd4a0',scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},render:{pixelArt:false,antialias:true},scene:[World]});
+const game=new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#9bd4a0',scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},render:{pixelArt:false,antialias:true,powerPreference:'high-performance'},scene:[World]});
 const refreshOrders=()=>{if(!game.scene.isActive('world'))return;const scene=game.scene.getScene('world') as World;ordersEl.style.display=scene.zone==='cafe'?'block':'none';ordersEl.innerHTML=scene.zone==='cafe'?`📋 ĐƠN HÀNG <small>(còn ${state.orders.length})</small><div>${state.orders.map(o=>`<span>${RECIPES[o.recipe].name} · ${Math.max(0,Math.ceil((o.expiresAt-Date.now())/1000))}s</span>`).join('')}</div><button id="restock">🥛 Nhập nguyên liệu · 20 xu</button>`:'';const btn=document.querySelector<HTMLButtonElement>('#restock');if(btn)btn.onclick=()=>{toast(restock(state)?'Đã mua sữa và sô-cô-la':'Không đủ 20 xu');sync()}};
 const worldMap=createWorldMap(state,sync,toast,open=>{const scene=game.scene.getScene('world') as World;scene.mapOpen=open;if(open){scene.target=undefined;scene.pending=undefined}});
 (document.getElementById('map-open') as HTMLButtonElement).onclick=()=>worldMap.open();
