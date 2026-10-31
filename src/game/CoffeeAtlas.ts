@@ -13,7 +13,9 @@ function leaf(ctx:CanvasRenderingContext2D,x:number,y:number,r:number,color:stri
 function drawCrop(ctx:CanvasRenderingContext2D,stage:number,x:number){
  ctx.save();ctx.translate(x+WIDTH/2,HEIGHT-8);
  ctx.fillStyle='rgba(37,46,24,.2)';ctx.beginPath();ctx.ellipse(0,-2,41,12,0,0,Math.PI*2);ctx.fill();
+ // Hand-painted soil depth, highlights and irregular earth texture.
  ctx.fillStyle='#8d5c39';ctx.beginPath();ctx.ellipse(0,-8,40,17,0,0,Math.PI*2);ctx.fill();
+ for(let i=0;i<7;i++){const px=-30+i*10;ctx.fillStyle=i%2?'#aa784e':'#65472e';ctx.beginPath();ctx.ellipse(px,-8+(i%3)*3,3,2,0,0,Math.PI*2);ctx.fill()}
  ctx.strokeStyle='#b98658';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-8,36,13,0,0,Math.PI*2);ctx.stroke();
  if(stage===0){ctx.restore();return}
  if(stage===1){
@@ -30,6 +32,12 @@ function drawCrop(ctx:CanvasRenderingContext2D,stage:number,x:number){
   leaf(ctx,16,y-4,radius,i%2?'#80c36f':'#3e9853',.36);
  }
  leaf(ctx,0,-tall,16,'#8cce79',0);
+ // Pale veins and leaf sheen give each growth stage a readable silhouette at mobile zoom.
+ ctx.strokeStyle='rgba(226,246,178,.65)';ctx.lineWidth=1.5;
+ for(let i=0;i<layers;i++){
+  const y=-24-i*(stage===3?15:12);
+  ctx.beginPath();ctx.moveTo(-30,y+4);ctx.lineTo(-6,y-1);ctx.moveTo(7,y-5);ctx.lineTo(29,y-9);ctx.stroke();
+ }
  if(stage===3){
   for(const [bx,by] of [[-19,-37],[20,-44],[-13,-61],[16,-68],[-5,-50]]){
    ctx.fillStyle='#6d3035';ctx.beginPath();ctx.arc(bx+1,by+3,6,0,Math.PI*2);ctx.fill();
