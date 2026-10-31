@@ -108,3 +108,28 @@ test('v0.6.4 stress: 40 scene transitions without unbounded GPU texture growth',
  expect(samples[3]).toBeLessThan(30);
  expect(errors).toEqual([]);
 });
+
+test('v0.6.5 environment art is shared across scenes and mobile orientations',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ const host=page.locator('#game');
+ await expect(host).toHaveAttribute('data-environment-atlas','v065');
+ await expect(host).toHaveAttribute('data-zone','farm');
+ await testInfo.attach('farm-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await page.locator('#action').click();
+ await expect(host).toHaveAttribute('data-zone','cafe');
+ await testInfo.attach('cafe-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await page.setViewportSize({width:390,height:844});
+ await expect.poll(async()=>host.getAttribute('data-viewport')).toMatch(/^390x[3-9]\\d{2}$/);
+ await testInfo.attach('mobile-portrait-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await page.setViewportSize({width:844,height:390});
+ await expect.poll(async()=>host.getAttribute('data-viewport')).toMatch(/^844x[2-9]\\d{2}$/);
+ await testInfo.attach('mobile-landscape-v065.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ for(let i=0;i<20;i++){
+  await page.locator('#action').dispatchEvent('click');
+  await expect(host).toHaveAttribute('data-zone',i%2===0?'farm':'cafe');
+ }
+ await expect.poll(async()=>Number(await host.getAttribute('data-texture-count'))).toBeGreaterThan(0);
+ expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThanOrEqual(12);
+ expect(errors).toEqual([]);
+});
