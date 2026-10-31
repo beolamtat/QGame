@@ -133,3 +133,33 @@ test('v0.6.5 environment art is shared across scenes and mobile orientations',as
  expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThanOrEqual(12);
  expect(errors).toEqual([]);
 });
+
+test('v0.6.6 responsive HUD fits mobile portrait and landscape without horizontal overflow',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ const host=page.locator('#game');
+ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390}]){
+  await page.setViewportSize(viewport);
+  await expect.poll(async()=>host.getAttribute('data-camera-mode')).toBe(viewport.width>viewport.height?'landscape':'portrait');
+  const metrics=await page.evaluate(()=>{
+   const rect=(id:string)=>{const e=document.getElementById(id)!;const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+   return {width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,top:rect('top'),bottom:rect('bottom'),controls:rect('controls'),stats:rect('stats'),help:rect('help')};
+  });
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.width+1);
+  expect(metrics.controls.left).toBeGreaterThanOrEqual(-1);
+  expect(metrics.controls.right).toBeLessThanOrEqual(metrics.width+1);
+  expect(metrics.top.bottom).toBeLessThan(metrics.bottom.top);
+  expect(metrics.stats.right).toBeLessThanOrEqual(metrics.width+1);
+  expect(metrics.help.left).toBeGreaterThanOrEqual(-1);
+  const zoom=Number(await host.getAttribute('data-camera-zoom'));
+  expect(zoom).toBeGreaterThanOrEqual(.25);
+  expect(zoom).toBeLessThanOrEqual(1.5);
+  await testInfo.attach('hud-'+viewport.width+'x'+viewport.height+'-v066.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ }
+ await page.locator('#action').click();
+ await expect(host).toHaveAttribute('data-zone','cafe');
+ await page.locator('#map-open').click();
+ await expect(page.locator('#world-map')).toHaveClass(/visible/);
+ await page.locator('#map-close').click();
+ expect(errors).toEqual([]);
+});
