@@ -6,6 +6,7 @@ import {placeProps} from './game/PropAtlas';
 import {registerLabelAtlas,plotLabel,recipeLabel,zoneSign} from './game/LabelAtlas';
 import {registerCoffeeAtlas,makeCoffeePlant,COFFEE_ATLAS_KEY} from './game/CoffeeAtlas';
 import {CROP_WEBP_DATA_URI,CROP_WEBP_BYTES} from './assets/cropWebp';
+import {REVIEW_ART_ENABLED,WEBP_ASSETS,WEBP_TOTAL_BYTES} from './assets/webpManifest';
 import {createCharacter,updateCharacter,playAction,type CharacterRig} from './game/CharacterAnimation';
 import {floatingReward,interactionBurst,brewProgress} from './game/InteractionFX';
 import {load,persist,grow,plant,water,harvest,roast,brew,serve,upgrade,restock,newOrder,RECIPES,type RecipeId,type Order,type State} from './game/Economy';
@@ -40,6 +41,7 @@ class World extends Phaser.Scene{
   preload(){
     // Decode a prepacked WebP sprite atlas once, before the first scene is built.
     this.load.image(COFFEE_ATLAS_KEY,CROP_WEBP_DATA_URI);
+    if(REVIEW_ART_ENABLED)for(const asset of WEBP_ASSETS)this.load.image(asset.key,asset.url);
   }
   create(){
     this.drawZone('farm');
@@ -90,7 +92,7 @@ class World extends Phaser.Scene{
     placeProps(this,zone);
     registerCoffeeAtlas(this);
     registerLabelAtlas(this);
-    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.propAtlasFrames='6';host.dataset.environmentAtlas='v065';host.dataset.assetFormat=this.textures.exists(COFFEE_ATLAS_KEY)?'webp':'canvas-fallback';host.dataset.cropWebpBytes=String(CROP_WEBP_BYTES);host.dataset.zone=zone}
+    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.propAtlasFrames='6';host.dataset.environmentAtlas='v065';host.dataset.reviewArt=REVIEW_ART_ENABLED?'webp':'canvas';host.dataset.webpBinaryBytes=String(WEBP_TOTAL_BYTES);host.dataset.assetFormat=this.textures.exists(COFFEE_ATLAS_KEY)?'webp':'canvas-fallback';host.dataset.cropWebpBytes=String(CROP_WEBP_BYTES);host.dataset.zone=zone}
     if(zone==='farm'){
       for(let i=0;i<12;i++){
         const x=170+(i%4)*145+(i%4>=2?225:0),y=240+Math.floor(i/4)*205;
