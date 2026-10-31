@@ -48,7 +48,11 @@ function drawCrop(ctx:CanvasRenderingContext2D,stage:number,x:number){
  ctx.restore();
 }
 export function registerCoffeeAtlas(scene:Phaser.Scene):void{
- if(scene.textures.exists(COFFEE_ATLAS_KEY))return;
+ if(scene.textures.exists(COFFEE_ATLAS_KEY)){
+  const tex=scene.textures.get(COFFEE_ATLAS_KEY);
+  COFFEE_FRAMES.forEach((name,i)=>{if(!tex.has(name))tex.add(name,0,i*WIDTH,0,WIDTH,HEIGHT)});
+  return;
+ }
  const canvas=document.createElement('canvas');canvas.width=WIDTH*COFFEE_FRAMES.length;canvas.height=HEIGHT;
  const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Coffee atlas: Canvas2D unavailable');
  COFFEE_FRAMES.forEach((_,i)=>drawCrop(ctx,i,i*WIDTH));
