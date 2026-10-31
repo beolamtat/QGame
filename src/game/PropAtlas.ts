@@ -41,10 +41,22 @@ function paint(c:CanvasRenderingContext2D,index:number,x:number){
   c.strokeStyle='#f6e9ce';c.lineWidth=8;c.beginPath();c.arc(24,64,11,-Math.PI/2,Math.PI/2);c.stroke();
   oval(c,0,51,8,3,'#f5d6a8');
  }
+ // Inked accents, highlights and tiny craftsmanship details on each object.
+ if(index===0){for(let i=0;i<9;i++){const a=i*2.4;oval(c,Math.cos(a)*23,48+Math.sin(a)*16,5,3,i%2?'#a5d982':'#386d4d')}}
+ if(index===1){for(let i=0;i<5;i++)oval(c,(i-2)*10,31+(i%2)*10,3,5,'#fff3ca');rect(c,-15,83,30,3,'#f5c59c',1)}
+ if(index===2){for(let i=0;i<7;i++)rect(c,-18+i*6,48+(i%2)*3,2,3,'rgba(111,74,44,.35)',1);oval(c,0,69,4,8,'#dfad79')}
+ if(index===3){for(let i=0;i<4;i++){rect(c,-21+i*14,58,2,31,'#efc68d',1);oval(c,-20+i*14,76,2,2,'#76523e')}}
+ if(index===4){for(let i=0;i<5;i++)oval(c,(i-2)*6,47+(i%2)*7,2,4,'rgba(255,250,209,.8)')}
+ if(index===5){oval(c,-10,55,8,2,'#fff6e9');oval(c,8,59,5,2,'#f5d9aa')}
  c.restore();
 }
 export function registerPropAtlas(scene:Phaser.Scene):void{
- if(scene.textures.exists(PROP_ATLAS_KEY))return;
+ if(scene.textures.exists(PROP_ATLAS_KEY)){
+  const tex=scene.textures.get(PROP_ATLAS_KEY);
+  const fw=tex.source[0].width/PROP_FRAMES.length,fh=tex.source[0].height;
+  PROP_FRAMES.forEach((name,i)=>{if(!tex.has(name))tex.add(name,0,i*fw,0,fw,fh)});
+  return;
+ }
  const canvas=document.createElement('canvas');canvas.width=W*PROP_FRAMES.length;canvas.height=H;
  const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Prop atlas requires Canvas2D');
  PROP_FRAMES.forEach((_,i)=>paint(ctx,i,i*W));
