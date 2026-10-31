@@ -1,4 +1,7 @@
 # COFFEE WORLD – TU TIÊN CÀ PHÊ
+
+> **Bản tiếng Việt đầy đủ / Full Vietnamese translation:** [COFFEE_WORLD_MASTER_GDD_V2_VI.md](./COFFEE_WORLD_MASTER_GDD_V2_VI.md)
+
 ## MASTER GAME DESIGN DOCUMENT (GDD) v2.0 — GAMEPLAY-FIRST
 Status: PROPOSED FOR PRODUCT REVIEW, not implemented. Date: 2026-11-01.
 Branch: `feat/coffee-world-redesign`. Do not merge main without explicit approval.
