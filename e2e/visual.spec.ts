@@ -87,3 +87,23 @@ test('v0.6.3 shared prop textures and runtime diagnostics remain bounded',async(
  await testInfo.attach('cafe-v063.png',{body:await page.screenshot(),contentType:'image/png'});
  expect(errors).toEqual([]);
 });
+
+test('v0.6.4 stress: 40 scene transitions without unbounded GPU texture growth',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ const host=page.locator('#game');
+ await expect.poll(async()=>Number(await host.getAttribute('data-texture-count')),{timeout:12000}).toBeGreaterThan(0);
+ const samples:number[]=[];
+ for(let i=0;i<40;i++){
+  await page.locator('#action').click();
+  await expect(host).toHaveAttribute('data-zone',i%2===0?'cafe':'farm');
+  if((i+1)%10===0){
+   await expect.poll(async()=>Number(await host.getAttribute('data-texture-count'))).toBeGreaterThan(0);
+   samples.push(Number(await host.getAttribute('data-texture-count')));
+  }
+ }
+ console.log('v0.6.4 texture samples after 10/20/30/40 transitions:',JSON.stringify(samples));
+ expect(samples[3]-samples[1]).toBeLessThanOrEqual(12);
+ expect(samples[3]).toBeLessThan(100);
+ expect(errors).toEqual([]);
+});
