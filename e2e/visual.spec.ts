@@ -6,6 +6,7 @@ test('v0.6.1 farm visual, crop atlas and camera fit',async({page},testInfo)=>{
  const host=page.locator('#game');
  await expect(host.locator('canvas')).toBeVisible();
  await expect(host).toHaveAttribute('data-atlas-frames','4');
+ await expect(host).toHaveAttribute('data-hero-atlas-frames','24');
  await expect(host).toHaveAttribute('data-zone','farm');
  await expect.poll(async()=>Number(await host.getAttribute('data-camera-zoom'))).toBeGreaterThan(.37);
  const canvas=host.locator('canvas');
@@ -40,4 +41,20 @@ test('v0.6.1 orientation resize preserves usable camera and interactions',async(
  await page.locator('#action').click();
  await expect(page.locator('#game')).toHaveAttribute('data-zone','cafe');
  await testInfo.attach('landscape-v061.png',{body:await page.screenshot(),contentType:'image/png'});
+});
+
+test('v0.6.2 character atlas survives movement, zone switches and reload',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ await expect(page.locator('#game')).toHaveAttribute('data-hero-atlas-frames','24');
+ const canvas=page.locator('#game canvas');
+ await canvas.click({position:{x:200,y:230}});
+ await page.waitForTimeout(450);
+ await testInfo.attach('hero-walk-v062.png',{body:await page.screenshot(),contentType:'image/png'});
+ await page.locator('#action').click();
+ await expect(page.locator('#game')).toHaveAttribute('data-zone','cafe');
+ await expect(page.locator('#game')).toHaveAttribute('data-hero-atlas-frames','24');
+ await page.reload();
+ await expect(page.locator('#game')).toHaveAttribute('data-hero-atlas-frames','24');
+ expect(errors).toEqual([]);
 });
