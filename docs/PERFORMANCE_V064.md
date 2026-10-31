@@ -15,7 +15,7 @@ No changes to the economy, player movement, crop growth timings, order rules, sa
 - `data-texture-count` reports Phaser TextureManager entries, **not GPU memory bytes**.
 - `data-fps-estimate` measures game-loop frames / accumulated delta, **not GPU frame time**.
 - Tests execute on Playwright Chromium desktop/mobile and mobile WebKit; they do not measure physical phone heat, battery, frame pacing, or sustained GPU load.
-- A strict texture plateau is the desired gate; if tests detect growth, investigate ownership and lifecycle instead of simply increasing thresholds.
+- A strict texture plateau is the desired gate: the 40-transition test now requires the last 20 transitions to add at most two TextureManager entries and remain below 30 total. Initial CI runs exposed one persistent generated texture per transition; moving signage into the shared atlas targets that root cause.
 
 ## Acceptance gates
 1. `npm test` passes.
