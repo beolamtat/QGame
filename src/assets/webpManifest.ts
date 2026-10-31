@@ -11,3 +11,12 @@ export const WEBP_ASSETS=[
 ] as const;
 export const WEBP_TOTAL_BYTES=WEBP_ASSETS.reduce((sum,asset)=>sum+asset.bytes,0);
 export const REVIEW_ART_ENABLED=new URLSearchParams(window.location.search).get('art')===REVIEW_ART_PARAM;
+
+/** v0.6.9 native-resolution art review; not enabled for normal gameplay until visual sign-off. */
+export const ART_V069_ENABLED=new URLSearchParams(window.location.search).get('art')==='v069';
+export const WEBP_V069_ASSETS=[
+ {key:'coffee-hero-v062',url:'/assets/hero-v069.webp',width:1920,height:112,frames:24,frameWidth:80},
+ {key:'coffee-props-v063',url:'/assets/props-v069.webp',width:576,height:112,frames:6,frameWidth:96},
+ {key:'coffee-environment-farm-v065',url:'/assets/farm-v069.webp',width:1600,height:1000,frames:1,frameWidth:1600},
+ {key:'coffee-environment-cafe-v065',url:'/assets/cafe-v069.webp',width:1600,height:1000,frames:1,frameWidth:1600}
+] as const;
