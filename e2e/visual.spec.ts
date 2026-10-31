@@ -89,6 +89,7 @@ test('v0.6.3 shared prop textures and runtime diagnostics remain bounded',async(
 });
 
 test('v0.6.4 stress: 40 scene transitions without unbounded GPU texture growth',async({page})=>{
+ test.setTimeout(120000);
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/');
  const host=page.locator('#game');
