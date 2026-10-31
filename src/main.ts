@@ -155,7 +155,7 @@ class World extends Phaser.Scene{
    drawer('☕ '+RECIPES[recipe].name+' · '+(step+1)+'/5',`<strong>${current[1]}</strong><p>${current[2]}</p><button id="brew-step">${step===4?'Hoàn thành ly cà phê':'Tiếp tục thao tác'}</button>`);
    document.getElementById('brew-step')!.onclick=()=>{
     step++;if(step<BREW_STEPS.length){show();return}
-    el('drawer').hidden=true;state.prepared.push(recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha xong! Chạm khách để phục vụ');sync();
+    el('drawer').hidden=true;el('drawer-close').hidden=false;state.prepared.push(recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha xong! Chạm khách để phục vụ');sync();
    };
   };show();
  }
