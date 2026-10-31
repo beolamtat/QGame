@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import './style.css';
 import {createWorldMap} from './game/WorldMap';
 import {decorateWorld} from './game/WorldArt';
+import {placeProps} from './game/PropAtlas';
 import {registerCoffeeAtlas,makeCoffeePlant} from './game/CoffeeAtlas';
 import {createCharacter,updateCharacter,playAction,type CharacterRig} from './game/CharacterAnimation';
 import {floatingReward,interactionBurst,brewProgress} from './game/InteractionFX';
@@ -29,6 +30,9 @@ class World extends Phaser.Scene{
   busy=false;
   lastOrders=0;
   mapOpen=false;
+  perfFrames=0;
+  perfMs=0;
+  perfLast=0;
   constructor(){super('world')}
   create(){
     this.drawZone('farm');
@@ -54,8 +58,9 @@ class World extends Phaser.Scene{
     this.zone=zone;this.target=undefined;this.pending=undefined;this.objects=[];this.visuals=[];this.customerActors=[];this.busy=false;
     this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
     decorateWorld(this,zone);
+    placeProps(this,zone);
     registerCoffeeAtlas(this);
-    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.zone=zone}
+    const host=document.getElementById('game');if(host){host.dataset.atlasFrames='4';host.dataset.propAtlasFrames='6';host.dataset.zone=zone}
     if(zone==='farm'){
       for(let i=0;i<12;i++){
         const x=170+(i%4)*145+(i%4>=2?225:0),y=240+Math.floor(i/4)*205;
@@ -111,6 +116,17 @@ class World extends Phaser.Scene{
     });
   }
   update(time:number,delta:number){
+    this.perfFrames++;
+    this.perfMs+=delta;
+    if(time-this.perfLast>=2000){
+      const host=document.getElementById('game');
+      if(host){
+        host.dataset.fpsEstimate=String(Math.round(this.perfFrames*1000/Math.max(this.perfMs,1)));
+        host.dataset.displayObjects=String(this.children.length);
+        host.dataset.textureCount=String(this.textures.list?Object.keys(this.textures.list).length:0);
+      }
+      this.perfLast=time;this.perfFrames=0;this.perfMs=0;
+    }
     if(this.zone==='farm'&&Math.floor(time/500)!==Math.floor((time-delta)/500)){this.refreshVisuals()}
     if(this.zone==='cafe'){
       const before=state.orders.length;
