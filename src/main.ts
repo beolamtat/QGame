@@ -44,6 +44,13 @@ class World extends Phaser.Scene{
     if(REVIEW_ART_ENABLED)for(const asset of WEBP_ASSETS)this.load.image(asset.key,asset.url);
   }
   create(){
+    // Dev-only export bridge for deterministic WebP generation in GitHub Actions.
+    if(import.meta.env.DEV)(window as unknown as {__coffeeExportArt?: (key:string)=>string}).__coffeeExportArt=(key:string)=>{
+      const tex=this.textures.get(key);
+      const source=tex.getSourceImage() as HTMLCanvasElement;
+      if(typeof source.toDataURL!=='function')throw new Error('Canvas source unavailable: '+key);
+      return source.toDataURL('image/webp',.88);
+    };
     this.drawZone('farm');
     this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{
       if(this.mapOpen||this.busy)return;
