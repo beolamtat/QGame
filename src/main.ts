@@ -3,7 +3,7 @@ import './style.css';
 import {createWorldMap} from './game/WorldMap';
 import {decorateWorld} from './game/WorldArt';
 import {placeProps} from './game/PropAtlas';
-import {registerLabelAtlas,plotLabel,recipeLabel} from './game/LabelAtlas';
+import {registerLabelAtlas,plotLabel,recipeLabel,zoneSign} from './game/LabelAtlas';
 import {registerCoffeeAtlas,makeCoffeePlant} from './game/CoffeeAtlas';
 import {createCharacter,updateCharacter,playAction,type CharacterRig} from './game/CharacterAnimation';
 import {floatingReward,interactionBurst,brewProgress} from './game/InteractionFX';
@@ -78,12 +78,12 @@ class World extends Phaser.Scene{
 
       }
       this.objects.push({x:1380,y:300,kind:'roaster'});
-      this.add.text(1280,280,'🔥 LÒ RANG',{fontSize:'24px',color:'#fff3c7',backgroundColor:'#704b36'}).setDepth(400);
+      zoneSign(this,'farm',1380,280);
       help.textContent='Cây: trồng → tưới → thu hoạch · Chạm lò rang hoặc nút Rang';
       extra.textContent='🔥 Rang 3 hạt';
     }else{
       this.objects.push({x:750,y:410,kind:'counter'});
-      this.add.text(570,350,'☕ QUẦY PHA CHẾ',{fontSize:'28px',color:'#fff4c7',backgroundColor:'#704b36'}).setDepth(400);
+      zoneSign(this,'cafe',750,350);
       help.textContent='Chạm quầy pha theo đơn · Chạm khách giao đồ · Nâng cấp quán';
       extra.textContent='⬆ Nâng cấp';
       if(state.orders.length===0)newOrder(state);
