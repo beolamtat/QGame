@@ -68,6 +68,7 @@ export function placeProps(scene:Phaser.Scene,zone:'farm'|'cafe'):void{
   {x:1350,y:645,frame:'coffee-cup',scale:.65},{x:1170,y:405,frame:'coffee-sack',scale:.8}
  ];
  for(const p of layout){
-  scene.add.image(p.x,p.y,PROP_ATLAS_KEY,p.frame).setOrigin(.5,.9).setScale(p.scale??1).setDepth(p.y-1);
+  const img=scene.add.image(p.x,p.y,PROP_ATLAS_KEY,p.frame).setOrigin(.5,.9);
+  img.setScale((p.scale??1)*(img.frame.width===48?2:1)).setDepth(p.y-1);
  }
 }
