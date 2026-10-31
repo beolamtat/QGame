@@ -40,6 +40,54 @@
 
 ## Các file cần có sau này
 
-- `docs/design/concepts/screen-01.png` … `screen-24.png`: **chưa được upload**.
+- `docs/design/concepts/screen-01.png` … `screen-24.png`: đã có các ảnh trên GitHub; xem [SCREEN_INDEX.md](SCREEN_INDEX.md) để mở từng concept. Việc kiểm kê tự động đủ 24 file và kiểm tra trực quan vẫn cần hoàn tất.
 - Storyboard Espresso và Phin: cần Claude soạn để duyệt trước khi triển khai.
 - Sprite atlas / source art: lưu ở project game mới khi sản xuất; không cần đưa source prototype cũ vào.
+
+## Ma trận 24 concept → asset production
+
+Bảng này là **định hướng tách asset từ chủ đề concept**, chưa phải kết quả kiểm tra từng pixel hay xác nhận sprite có sẵn. Xem [SCREEN_INDEX.md](SCREEN_INDEX.md) để biết tên concept. Đánh số ảnh khác với ID S00–S23 trong GDD.
+
+| Ảnh | Chủ đề | Asset cần sản xuất/tái sử dụng | Tương tác/logic cần có |
+|---|---|---|---|
+| [01](concepts/screen-01.png) | Tai nạn trong đêm mưa | đường phố mưa, xe, nhân vật, mưa/đèn, hiệu ứng sự cố | cutscene/event có trigger, không dùng ảnh nền tĩnh để giả gameplay |
+| [02](concepts/screen-02.png) | Gặp năm vị tiên | thiên giới, cổng, 5 NPC, hiệu ứng phép, hội thoại | NPC và overlay hội thoại tách riêng |
+| [03](concepts/screen-03.png) | Khởi hành tu tiên | đường đi, nhân vật, đạo cụ khởi đầu, HUD | tap-to-move, camera follow |
+| [04](concepts/screen-04.png) | Nông trại | đất, cây nhiều giai đoạn, dụng cụ, giỏ, nước | trồng/tưới/thu hoạch có state |
+| [05](concepts/screen-05.png) | Xưởng rang | máy rang, hạt xanh/rang, nhiệt kế, khói | độ rang, nhiệt và thời gian |
+| [06](concepts/screen-06.png) | Quán ngày bận rộn | quầy, bàn, khách, order, ly, thanh toán | vòng lặp khách-order-phục vụ-thu tiền |
+| [07](concepts/screen-07.png) | Espresso | máy, portafilter, cân, máy xay, tamper, WDT, ly | 12 thao tác tương tác và đo lường |
+| [08](concepts/screen-08.png) | Bản đồ thế giới | bản đồ, marker, icon vùng, trạng thái khóa | zoom/pan và chọn địa điểm |
+| [09](concepts/screen-09.png) | Nông trại biến thể | dùng chung bộ cây/đất 04; khác bố cục/props | so sánh 04/18 trước khi dựng thêm |
+| [10](concepts/screen-10.png) | Trang trí quán | đồ nội thất, bảng chọn, grid vị trí | chọn/đặt/xoay/nâng cấp |
+| [11](concepts/screen-11.png) | Nhân viên | NPC, đồng phục, biểu cảm, task icon | AI nhân viên, thuê/phân công |
+| [12](concepts/screen-12.png) | Khám phá Việt Nam | bản đồ/địa danh, marker, icon du lịch | dùng chung hệ bản đồ 19 |
+| [13](concepts/screen-13.png) | Học viện COG | sư phụ, học viên, lớp học, dụng cụ | NPC dialogue, bài học |
+| [14](concepts/screen-14.png) | Drip V60 | phễu V60, giấy lọc, ấm cổ ngỗng, bình, nước | pour-over riêng, tuyệt đối không gọi Phin |
+| [15](concepts/screen-15.png) | Tốt nghiệp | hội trường, NPC, chứng nhận, hiệu ứng | progression reward |
+| [16](concepts/screen-16.png) | Mở rộng quán | module phòng, bàn, quầy, vật liệu | nâng diện tích và unlock |
+| [17](concepts/screen-17.png) | Quản lý quán | HUD kinh doanh, hàng chờ, NPC, tiền, tồn kho | kinh tế thật, không fake counter |
+| [18](concepts/screen-18.png) | Nông trại biến thể | tái sử dụng nhóm 04/09 | đánh giá layout trước khi sản xuất |
+| [19](concepts/screen-19.png) | Khám phá Việt Nam biến thể | bản đồ/địa danh, marker | tái sử dụng hệ 12 |
+| [20](concepts/screen-20.png) | Nhật ký | panel sách, mục nhiệm vụ, ảnh/icon, dấu hoàn thành | lưu tiến độ và tra cứu |
+| [21](concepts/screen-21.png) | Tùy chỉnh nhân vật | tóc, mặt, quần áo, phụ kiện, avatar | các layer có thể thay độc lập |
+| [22](concepts/screen-22.png) | Kỹ năng pha chế | node, icon, liên kết, panel chi tiết | unlock phụ thuộc progression |
+| [23](concepts/screen-23.png) | Minigame pha chế | dụng cụ, nước, ly, hướng dẫn thao tác | xác minh V60/Phin qua ảnh và storyboard |
+| [24](concepts/screen-24.png) | Nâng cấp quán | nội thất, nâng cấp, tiền, UI so sánh | tái sử dụng 10/16/17 |
+
+## Ưu tiên sản xuất và tái sử dụng
+
+- **P0 — nền tảng:** camera 3/4, nhân vật, input tap/click, occlusion/Y-sort, collision, responsive, HUD tách lớp.
+- **P1 — Espresso (07):** 12 thao tác thực, định lượng, xay, nén, chiết xuất, đánh giá, animation và recovery.
+- **P2 — Phin Việt Nam:** **chưa có concept phin được xác nhận**. Cần storyboard và bộ dụng cụ phin kim loại riêng, không tái dùng V60 (14/23).
+- **P3 — Quán (06, 10, 11, 16, 17, 24):** order, hàng chờ, thanh toán, nhân sự, decor và mở rộng dùng chung prefab.
+- **P4 — Farm/roast (04, 05, 09, 18):** dùng chung cây trồng, tile đất, vật phẩm, máy rang; concept biến thể không mặc nhiên là scene khác.
+- **P5 — Narrative/progression/world (01, 02, 03, 08, 12, 13, 15, 19, 20, 21, 22):** story event, bản đồ, kỹ năng, nhân vật.
+
+## Quy trình kiểm tra chất lượng asset
+
+1. Xác nhận file PNG thực tế và chủ đề của từng concept, ghi lại sai khác nếu có.
+2. Phân loại: background, foreground, interactive prop, NPC, UI, VFX, SFX; không dùng screenshot làm object tương tác.
+3. Xác định tỉ lệ hiển thị mobile, kích thước xuất, điểm neo, hitbox, layer, states và atlas.
+4. Tạo placeholder có thể chơi được, thay bằng asset đã duyệt khi sẵn sàng.
+5. Kiểm tra bộ nhớ GPU, kích thước texture, draw calls, FPS trên điện thoại tầm trung.
