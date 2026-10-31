@@ -225,3 +225,59 @@ test('v0.6.8 binary WebP asset review: valid headers, frame sizes, stable transi
  expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThan(20);
  expect(errors).toEqual([]);
 });
+
+test('v0.6.9 full-resolution art: 24 unique hero poses, six props and distinct environment plates',async({page},testInfo)=>{
+ test.setTimeout(120000);
+ const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('/?art=v069');
+ const host=page.locator('#game');
+ await expect(host).toHaveAttribute('data-review-art','v069');
+ await expect(host).toHaveAttribute('data-hero-atlas-frames','24');
+ await expect(host).toHaveAttribute('data-prop-atlas-frames','6');
+ const assets=[
+  {url:'/assets/hero-v069.webp',w:1920,h:112,frames:24},
+  {url:'/assets/props-v069.webp',w:576,h:112,frames:6},
+  {url:'/assets/farm-v069.webp',w:1600,h:1000,frames:1},
+  {url:'/assets/cafe-v069.webp',w:1600,h:1000,frames:1}
+ ];
+ const decoded=await page.evaluate(async assets=>{
+  const result=[];
+  for(const a of assets){
+   const response=await fetch(a.url);
+   const bytes=new Uint8Array(await response.arrayBuffer());
+   const blob=new Blob([bytes],{type:'image/webp'});
+   const bitmap=await createImageBitmap(blob);
+   const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;
+   const ctx=canvas.getContext('2d',{willReadFrequently:true})!;
+   ctx.drawImage(bitmap,0,0);bitmap.close();
+   const frameW=canvas.width/a.frames;
+   const hashes=[];
+   for(let i=0;i<a.frames;i++){
+    const data=ctx.getImageData(i*frameW,0,frameW,canvas.height).data;
+    let hash=2166136261;
+    for(let p=0;p<data.length;p+=4){hash=Math.imul(hash^data[p],16777619);hash=Math.imul(hash^data[p+1],16777619);hash=Math.imul(hash^data[p+2],16777619);hash=Math.imul(hash^data[p+3],16777619)}
+    hashes.push(hash>>>0);
+   }
+   result.push({status:response.status,bytes:bytes.length,width:canvas.width,height:canvas.height,unique:new Set(hashes).size,signature:String.fromCharCode(...bytes.slice(0,4))+'/'+String.fromCharCode(...bytes.slice(8,12))});
+  }
+  return result;
+ },assets);
+ decoded.forEach((d,i)=>{
+  expect(d.status).toBe(200);expect(d.signature).toBe('RIFF/WEBP');
+  expect(d.width).toBe(assets[i].w);expect(d.height).toBe(assets[i].h);
+  expect(d.bytes).toBeGreaterThan(100);
+  expect(d.bytes).toBeLessThan(i<2?300000:750000);
+  expect(d.unique).toBe(assets[i].frames);
+ });
+ await testInfo.attach('farm-v069-art-review.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await page.locator('#action').click();
+ await expect(host).toHaveAttribute('data-zone','cafe');
+ await testInfo.attach('cafe-v069-art-review.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ for(let i=0;i<40;i++){
+  await page.locator('#action').dispatchEvent('click');
+  await expect(host).toHaveAttribute('data-zone',i%2===0?'farm':'cafe');
+ }
+ await expect.poll(async()=>Number(await host.getAttribute('data-texture-count')),{timeout:12000}).toBeGreaterThan(0);
+ expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThanOrEqual(15);
+ expect(errors).toEqual([]);
+});
