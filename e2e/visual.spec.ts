@@ -181,3 +181,47 @@ test('v0.6.7 WebP crop atlas loads once and preserves crop frames across zones',
  expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThan(20);
  expect(errors).toEqual([]);
 });
+
+test('v0.6.8 binary WebP asset review: valid headers, frame sizes, stable transitions',async({page},testInfo)=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/?art=webp');
+ const host=page.locator('#game');
+ await expect(host).toHaveAttribute('data-review-art','webp');
+ await expect(host).toHaveAttribute('data-hero-atlas-frames','24');
+ await expect(host).toHaveAttribute('data-prop-atlas-frames','6');
+ await expect(host).toHaveAttribute('data-webp-binary-bytes','2986');
+ const assets=[
+  {url:'/assets/hero-v068.webp',width:960,height:56,bytes:238},
+  {url:'/assets/props-v068.webp',width:288,height:56,bytes:468},
+  {url:'/assets/farm-v068.webp',width:800,height:500,bytes:1090},
+  {url:'/assets/cafe-v068.webp',width:800,height:500,bytes:1190}
+ ];
+ const report=await page.evaluate(async items=>{
+  return await Promise.all(items.map(async item=>{
+   const response=await fetch(item.url);const buffer=await response.arrayBuffer();
+   const bytes=new Uint8Array(buffer);
+   const signature=String.fromCharCode(...bytes.slice(0,4))+'/'+String.fromCharCode(...bytes.slice(8,12));
+   const bitmap=await createImageBitmap(new Blob([buffer],{type:'image/webp'}));
+   const result={status:response.status,size:bytes.length,width:bitmap.width,height:bitmap.height,signature};
+   bitmap.close();return result;
+  }));
+ },assets);
+ report.forEach((item,i)=>{
+  expect(item.status).toBe(200);
+  expect(item.signature).toBe('RIFF/WEBP');
+  expect(item.size).toBe(assets[i].bytes);
+  expect(item.width).toBe(assets[i].width);
+  expect(item.height).toBe(assets[i].height);
+ });
+ await testInfo.attach('farm-binary-webp-v068.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ await page.locator('#action').click();
+ await expect(host).toHaveAttribute('data-zone','cafe');
+ await testInfo.attach('cafe-binary-webp-v068.png',{body:await page.screenshot({animations:'disabled'}),contentType:'image/png'});
+ for(let i=0;i<20;i++){
+  await page.locator('#action').dispatchEvent('click');
+  await expect(host).toHaveAttribute('data-zone',i%2===0?'farm':'cafe');
+ }
+ await expect.poll(async()=>Number(await host.getAttribute('data-texture-count'))).toBeGreaterThan(0);
+ expect(Number(await host.getAttribute('data-texture-count'))).toBeLessThan(20);
+ expect(errors).toEqual([]);
+});
