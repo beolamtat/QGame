@@ -1,5 +1,141 @@
-import Phaser from 'phaser';import './style.css';import {decorateWorld} from './game/WorldArt';
-type Save={coins:number,beans:number,drinks:number,harvested:number};const KEY='coffee-world-v01';const defaults:Save={coins:100,beans:0,drinks:0,harvested:0};let save:Save={...defaults};try{save={...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{}
-const app=document.querySelector<HTMLDivElement>('#app')!;app.innerHTML='<div id="game"></div><div id="hud"><div id="top"><span>☕ COFFEE WORLD</span><span id="stats"></span></div><div id="toast"></div><div id="bottom"><span class="panel" id="help">Chạm để di chuyển · Chạm cây để thu hoạch</span><button id="action">Đến quán ☕</button></div></div>';const stats=document.querySelector('#stats')!,toastEl=document.querySelector('#toast')!,action=document.querySelector<HTMLButtonElement>('#action')!,help=document.querySelector('#help')!;let toastTimer=0;function toast(msg:string){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toastEl.classList.remove('show'),2100)}function sync(){stats.textContent=`🪙 ${save.coins}   🫘 ${save.beans}   ☕ ${save.drinks}`;localStorage.setItem(KEY,JSON.stringify(save))}sync();
-class World extends Phaser.Scene{player!:Phaser.GameObjects.Container;target?:Phaser.Math.Vector2;zone:'farm'|'cafe'='farm';trees:{obj:Phaser.GameObjects.Container;ready:boolean;timer?:Phaser.Time.TimerEvent}[]=[];customers:Phaser.GameObjects.Container[]=[];busy=false;constructor(){super('world')}create(){this.cameras.main.setBackgroundColor('#8dcaa4');this.drawZone('farm');this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{const world=this.cameras.main.getWorldPoint(p.x,p.y);this.target=new Phaser.Math.Vector2(Phaser.Math.Clamp(world.x,35,1565),Phaser.Math.Clamp(world.y,45,955))});action.onclick=()=>this.drawZone(this.zone==='farm'?'cafe':'farm');this.scale.on('resize',()=>this.adjustCamera());this.adjustCamera()}adjustCamera(){this.cameras.main.setZoom(Math.min(this.scale.width/900,this.scale.height/560)*1.12);this.cameras.main.startFollow(this.player,true,.1,.1);this.cameras.main.setBounds(0,0,1600,1000)}circle(x:number,y:number,r:number,color:number){return this.add.circle(x,y,r,color)}rect(x:number,y:number,w:number,h:number,c:number){return this.add.rectangle(x,y,w,h,c)}drawZone(zone:'farm'|'cafe'){this.children.removeAll(true);this.trees=[];this.customers=[];this.zone=zone;this.busy=false;this.target=undefined;this.cameras.main.setBackgroundColor(zone==='farm'?'#9bd4a0':'#d4ad79');this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);decorateWorld(this,zone);const g=this.add.graphics();if(zone==='farm'){for(let i=0;i<17;i++){const y=95+i*53;g.lineStyle(2,0x7db87d,.5).lineBetween(0,y,1600,y)}for(let r=0;r<5;r++)for(let c=0;c<6;c++){const x=170+c*105+(c>=3?240:0),y=175+r*145;this.makeTree(x,y)}this.add.text(1290,207,'XƯỞNG CÀ PHÊ',{fontSize:'22px',color:'#fff8da'});help.textContent='Chạm vào cây đỏ để thu hoạch · Mang hạt tới quán'}else{this.add.text(540,245,'☕ QUẦY PHA CHẾ',{fontSize:'28px',color:'#fff7db'});this.add.text(560,370,'Chạm vào máy pha để làm cà phê',{fontSize:'24px',color:'#60462d'});for(let i=0;i<4;i++)this.makeCustomer(400+i*190,800);help.textContent='Chạm quầy để pha · Chạm khách để giao cà phê'}this.player=this.makePerson(800,720,0x377e9a,true);this.tweens.add({targets:this.player,scaleY:1.035,duration:600,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});this.player.setDepth(1000);this.adjustCamera();action.textContent=zone==='farm'?'Đến quán ☕':'Về nông trại 🌱';toast(zone==='farm'?'Chào mừng đến nông trại!':'Khách đang chờ cà phê!')}makePerson(x:number,y:number,shirt:number,hero=false){const shadow=this.add.ellipse(0,22,42,15,0x203d31,.23);const legs=this.rect(0,11,23,24,0x433d56);const body=this.rect(0,-12,34,39,shirt);const head=this.circle(0,-45,22,0xffd5a6);const hair=this.add.ellipse(0,-61,47,24,0x4c322d);const hat=this.add.ellipse(0,-72,58,14,0xd5a65b);const eyes=this.add.text(-11,-48,'• •',{fontSize:'13px',color:'#32251e'});const person=this.add.container(x,y,[shadow,legs,body,head,hair,hat,eyes]);person.setSize(45,85);if(hero)this.add.text(x-34,y-100,'BARISTA',{fontSize:'15px',color:'#2b553b',backgroundColor:'#f6e7b9'}).setDepth(1500);return person}makeTree(x:number,y:number){const ground=this.add.ellipse(0,24,83,28,0x386b38,.22);const trunk=this.rect(0,0,17,62,0x855539);const leaves=this.circle(0,-36,44,0x3b9556);const side=this.circle(-25,-22,28,0x48a761);const side2=this.circle(26,-25,28,0x2f814a);const fruit=this.add.text(-26,-55,'🔴 🔴\n 🔴 🔴',{fontSize:'19px'});const obj=this.add.container(x,y,[ground,trunk,leaves,side,side2,fruit]);obj.setDepth(y);this.trees.push({obj,ready:true})}makeCustomer(x:number,y:number){const obj=this.makePerson(x,y,0xbd668c);obj.setDepth(y);this.customers.push(obj)}update(_time:number,delta:number){if(this.target){const dx=this.target.x-this.player.x,dy=this.target.y-this.player.y,dist=Math.hypot(dx,dy),step=Math.min(dist,delta*.22);if(dist>5){this.player.x+=dx/dist*step;this.player.y+=dy/dist*step;this.player.setDepth(this.player.y+50)}else{this.target=undefined;this.interact()}}}interact(){if(this.busy)return;if(this.zone==='farm'){const t=this.trees.find(t=>t.ready&&Phaser.Math.Distance.Between(this.player.x,this.player.y,t.obj.x,t.obj.y)<85);if(t){t.ready=false;t.obj.setAlpha(.45);save.beans+=3;save.harvested++;sync();toast('+3 hạt cà phê 🫘');this.time.delayedCall(12000,()=>{t.ready=true;t.obj.setAlpha(1)})}}else{if(this.player.y<490&&this.player.x>340&&this.player.x<1180){if(save.beans<2){toast('Cần 2 hạt cà phê để pha!');return}save.beans-=2;save.drinks++;sync();toast('Đã pha 1 ly cà phê ☕')}else{const customer=this.customers.find(c=>Phaser.Math.Distance.Between(this.player.x,this.player.y,c.x,c.y)<95);if(customer){if(save.drinks<1){toast('Hãy pha cà phê trước!');return}save.drinks--;save.coins+=25;sync();toast('Bán thành công! +25 xu 🪙');customer.setAlpha(.25);this.time.delayedCall(4000,()=>customer.setAlpha(1))}}}}}
-new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#9bd4a0',scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},render:{pixelArt:false,antialias:true},scene:[World]});
+import Phaser from 'phaser';
+import './style.css';
+import {decorateWorld} from './game/WorldArt';
+import {load,persist,grow,plant,water,harvest,roast,brew,serve,upgrade,restock,newOrder,RECIPES,type RecipeId,type Order,type State} from './game/Economy';
+
+const state:State=load();
+const app=document.querySelector<HTMLDivElement>('#app')!;
+app.innerHTML=`<div id="game"></div><div id="hud"><div id="top"><span>☕ COFFEE WORLD · LV <b id="level">1</b></span><span id="stats"></span></div><div id="toast"></div><div id="orders" class="panel"></div><div id="bottom"><span class="panel" id="help">Chạm để di chuyển và tương tác</span><div id="controls"><button id="extra">Nâng cấp</button><button id="action">Đến quán ☕</button></div></div></div>`;
+const el=(id:string)=>document.getElementById(id)!;
+const stats=el('stats'),toastEl=el('toast'),ordersEl=el('orders'),help=el('help'),action=el('action') as HTMLButtonElement,extra=el('extra') as HTMLButtonElement;
+let toastTimer=0;
+function toast(msg:string){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toastEl.classList.remove('show'),2200)}
+function sync(){el('level').textContent=String(state.level);stats.textContent=`🪙 ${state.coins}  🫘 ${state.beans}  🔥 ${state.roasted}  ☕ ${state.drinks}  🥛 ${state.milk}  🍫 ${state.chocolate}`;persist(state)}
+type Zone='farm'|'cafe';
+type Interact={x:number,y:number,kind:'plot'|'roaster'|'counter'|'customer',index?:number};
+class World extends Phaser.Scene{
+  player!:Phaser.GameObjects.Container;
+  target?:Phaser.Math.Vector2;
+  pending?:Interact;
+  zone:Zone='farm';
+  objects:Interact[]=[];
+  visuals:Phaser.GameObjects.Container[]=[];
+  customerActors:{order:Order,actor:Phaser.GameObjects.Container,homeX:number,homeY:number}[]=[];
+  busy=false;
+  lastOrders=0;
+  constructor(){super('world')}
+  create(){
+    this.drawZone('farm');
+    this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{
+      const pos=this.cameras.main.getWorldPoint(p.x,p.y);
+      const near=this.objects.filter(o=>Phaser.Math.Distance.Between(o.x,o.y,pos.x,pos.y)<85).sort((a,b)=>Phaser.Math.Distance.Between(a.x,a.y,pos.x,pos.y)-Phaser.Math.Distance.Between(b.x,b.y,pos.x,pos.y))[0];
+      this.pending=near;
+      const x=near?near.x:pos.x,y=near?near.y:pos.y;
+      this.target=new Phaser.Math.Vector2(Phaser.Math.Clamp(x,45,1555),Phaser.Math.Clamp(y,175,940));
+    });
+    action.onclick=()=>this.drawZone(this.zone==='farm'?'cafe':'farm');
+    extra.onclick=()=>{if(this.zone==='farm'){if(roast(state)){toast('Đã rang 3 hạt cà phê 🔥')}else toast('Cần 3 hạt cà phê tươi')}else{if(upgrade(state)){toast('Quán lên cấp '+state.level+'! ✨')}else toast('Cần '+100*state.level+' xu để nâng cấp')}sync()};
+    this.scale.on('resize',()=>this.adjustCamera());
+    this.adjustCamera();
+  }
+  adjustCamera(){if(!this.player)return;this.cameras.main.setZoom(Math.min(this.scale.width/900,this.scale.height/560)*1.12);this.cameras.main.startFollow(this.player,true,.09,.09);this.cameras.main.setBounds(0,0,1600,1000)}
+  circle(x:number,y:number,r:number,c:number){return this.add.circle(x,y,r,c)}
+  rect(x:number,y:number,w:number,h:number,c:number){return this.add.rectangle(x,y,w,h,c)}
+  makePerson(x:number,y:number,color:number){const shadow=this.add.ellipse(0,22,44,16,0x273b2e,.3),legs=this.rect(0,11,24,24,0x443c50),body=this.rect(0,-13,34,40,color),face=this.circle(0,-44,22,0xffd4a4),hair=this.add.ellipse(0,-61,46,24,0x4b322e),hat=this.add.ellipse(0,-72,58,14,0xd5a65b),eyes=this.add.text(-11,-48,'• •',{fontSize:'13px',color:'#30231d'});return this.add.container(x,y,[shadow,legs,body,face,hair,hat,eyes]).setDepth(y)}
+  drawZone(zone:Zone){
+    this.tweens.killAll();this.children.removeAll(true);
+    this.zone=zone;this.target=undefined;this.pending=undefined;this.objects=[];this.visuals=[];this.customerActors=[];this.busy=false;
+    this.rect(800,500,1600,1000,zone==='farm'?0x9dd49c:0xcba66e).setDepth(-1000);
+    decorateWorld(this,zone);
+    if(zone==='farm'){
+      for(let i=0;i<12;i++){
+        const x=170+(i%4)*145+(i%4>=2?225:0),y=240+Math.floor(i/4)*205;
+        this.objects.push({x,y,kind:'plot',index:i});
+        const label=this.add.text(0,-90,'',{fontSize:'19px',color:'#fff3cb',backgroundColor:'#365c45',padding:{x:6,y:3}}).setOrigin(.5);
+        const leaves=this.circle(0,-35,35,0x3c9756),fruit=this.add.text(-26,-57,'🔴 🔴',{fontSize:'17px'});
+        const ground=this.add.ellipse(0,15,95,42,0x80573e,.7);
+        const obj=this.add.container(x,y,[ground,leaves,fruit,label]).setDepth(y);
+        this.visuals.push(obj);
+      }
+      this.objects.push({x:1380,y:300,kind:'roaster'});
+      this.add.text(1280,280,'🔥 LÒ RANG',{fontSize:'24px',color:'#fff3c7',backgroundColor:'#704b36'}).setDepth(400);
+      help.textContent='Cây: trồng → tưới → thu hoạch · Chạm lò rang hoặc nút Rang';
+      extra.textContent='🔥 Rang 3 hạt';
+    }else{
+      this.objects.push({x:750,y:410,kind:'counter'});
+      this.add.text(570,350,'☕ QUẦY PHA CHẾ',{fontSize:'28px',color:'#fff4c7',backgroundColor:'#704b36'}).setDepth(400);
+      help.textContent='Chạm quầy pha theo đơn · Chạm khách giao đồ · Nâng cấp quán';
+      extra.textContent='⬆ Nâng cấp';
+      if(state.orders.length===0)newOrder(state);
+      this.refreshCustomers();
+    }
+    this.player=this.makePerson(800,750,0x367f9b);
+    this.adjustCamera();
+    action.textContent=zone==='farm'?'Đến quán ☕':'Về nông trại 🌱';
+    this.refreshVisuals();sync();
+  }
+  refreshCustomers(){
+    for(const c of this.customerActors)c.actor.destroy();
+    this.customerActors=[];
+    this.objects=this.objects.filter(o=>o.kind!=='customer');
+    state.orders.forEach((order,i)=>{
+      const x=380+i*230,y=790;
+      const actor=this.makePerson(x,y,([0xbd668c,0x7687b4,0x78a45e,0xc58a55][i%4]));
+      this.add.text(x-54,y-112,RECIPES[order.recipe].name,{fontSize:'19px',color:'#fff',backgroundColor:'#76513c',padding:{x:5,y:3}}).setDepth(1000);
+      this.customerActors.push({order,actor,homeX:x,homeY:y});
+      this.objects.push({x,y,kind:'customer',index:order.id});
+      this.tweens.add({targets:actor,x:x+16,duration:1200+i*100,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    });
+  }
+  refreshVisuals(){
+    if(this.zone!=='farm')return;
+    grow(state);
+    state.plots.forEach((p,i)=>{
+      const o=this.visuals[i];if(!o)return;
+      const leaves=o.list[1] as Phaser.GameObjects.Arc;
+      const fruit=o.list[2] as Phaser.GameObjects.Text;
+      const label=o.list[3] as Phaser.GameObjects.Text;
+      leaves.setFillStyle(p.stage==='empty'?0x91633e:p.stage==='seed'?0x86a94f:p.stage==='growing'?0x5ba96c:0x358a4e);
+      leaves.setScale(p.stage==='empty'?.25:p.stage==='seed'?.45:p.stage==='growing'?.75:1);
+      fruit.setVisible(p.stage==='ripe');
+      label.setText(p.stage==='empty'?'🌱 Trồng':p.stage==='seed'?'💧 Tưới':p.stage==='growing'?'⏳ Đang lớn':'🫘 Thu hoạch');
+    });
+  }
+  update(time:number,delta:number){
+    if(this.zone==='farm'&&Math.floor(time/500)!==Math.floor((time-delta)/500)){this.refreshVisuals()}
+    if(this.zone==='cafe'){
+      const before=state.orders.length;
+      state.orders=state.orders.filter(o=>o.expiresAt>Date.now());
+      if(before!==state.orders.length){toast('Một khách đã rời quán!');this.refreshCustomers();sync()}
+      if(time-this.lastOrders>18000){this.lastOrders=time;if(newOrder(state)){this.refreshCustomers();sync()}}
+    }
+    if(!this.target||this.busy)return;
+    const dx=this.target.x-this.player.x,dy=this.target.y-this.player.y,d=Math.hypot(dx,dy),step=Math.min(d,delta*.23);
+    if(d>42){this.player.x+=dx/d*step;this.player.y+=dy/d*step;this.player.setDepth(this.player.y+10)}
+    else{this.target=undefined;if(this.pending){const obj=this.pending;this.pending=undefined;this.interact(obj)}}
+  }
+  interact(obj:Interact){
+    if(this.busy)return;
+    if(obj.kind==='plot'){
+      const i=obj.index!;const p=state.plots[i];
+      if(p.stage==='empty'){toast(plant(state,i)?'Đã gieo hạt (-3 xu) 🌱':'Không đủ 3 xu')}
+      else if(p.stage==='seed'){toast(water(state,i)?'Đã tưới! Chờ cây lớn 💧':'Chưa thể tưới')}
+      else if(p.stage==='ripe'){toast(harvest(state,i)?'+3 hạt cà phê 🫘':'Chưa thu hoạch được')}
+      else toast('Cây đang phát triển ⏳');
+      this.refreshVisuals();sync();
+    }else if(obj.kind==='roaster'){toast(roast(state)?'Đã rang 3 hạt 🔥':'Cần 3 hạt tươi');sync()}
+    else if(obj.kind==='counter'){
+      const order=state.orders[0];if(!order){toast('Chưa có đơn hàng');return}
+      if(!brew(state,order.recipe)){toast('Thiếu nguyên liệu! Mua thêm sữa/sô-cô-la ở nút Nâng cấp');return}
+      this.busy=true;toast('Đang pha '+RECIPES[order.recipe].name+'...');
+      this.time.delayedCall(RECIPES[order.recipe].brewMs,()=>{state.drinks++;this.busy=false;toast('Pha chế xong! Mang tới khách ☕');sync()});sync();
+    }else if(obj.kind==='customer'){
+      const order=state.orders.find(o=>o.id===obj.index);if(!order)return;
+      if(serve(state,order)){toast('Đã phục vụ '+RECIPES[order.recipe].name+'! +'+RECIPES[order.recipe].price+' xu');this.refreshCustomers()}
+      else toast('Chưa có đồ uống hoặc khách đã rời quán');sync();
+    }
+  }
+}
+const game=new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#9bd4a0',scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},render:{pixelArt:false,antialias:true},scene:[World]});
+const refreshOrders=()=>{if(!game.scene.isActive('world'))return;const scene=game.scene.getScene('world') as World;ordersEl.style.display=scene.zone==='cafe'?'block':'none';ordersEl.innerHTML=scene.zone==='cafe'?`📋 ĐƠN HÀNG <small>(còn ${state.orders.length})</small><div>${state.orders.map(o=>`<span>${RECIPES[o.recipe].name} · ${Math.max(0,Math.ceil((o.expiresAt-Date.now())/1000))}s</span>`).join('')}</div><button id="restock">🥛 Nhập nguyên liệu · 20 xu</button>`:'';const btn=document.querySelector<HTMLButtonElement>('#restock');if(btn)btn.onclick=()=>{toast(restock(state)?'Đã mua sữa và sô-cô-la':'Không đủ 20 xu');sync()}};
+window.setInterval(refreshOrders,1000);sync();
