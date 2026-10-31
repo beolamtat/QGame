@@ -189,12 +189,12 @@ test('v0.6.8 binary WebP asset review: valid headers, frame sizes, stable transi
  await expect(host).toHaveAttribute('data-review-art','webp');
  await expect(host).toHaveAttribute('data-hero-atlas-frames','24');
  await expect(host).toHaveAttribute('data-prop-atlas-frames','6');
- await expect(host).toHaveAttribute('data-webp-binary-bytes','2986');
+ await expect(host).toHaveAttribute('data-webp-binary-bytes','2196');
  const assets=[
   {url:'/assets/hero-v068.webp',width:960,height:56,bytes:238},
   {url:'/assets/props-v068.webp',width:288,height:56,bytes:468},
   {url:'/assets/farm-v068.webp',width:800,height:500,bytes:1090},
-  {url:'/assets/cafe-v068.webp',width:800,height:500,bytes:1190}
+  {url:'/assets/cafe-v068.webp',width:800,height:500,bytes:400}
  ];
  const report=await page.evaluate(async items=>{
   return await Promise.all(items.map(async item=>{
