@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import './style.css';
 import {createWorldMap} from './game/WorldMap';
 import {decorateWorld} from './game/WorldArt';
+import {createCharacter,updateCharacter,playAction,type CharacterRig} from './game/CharacterAnimation';
+import {floatingReward,interactionBurst,brewProgress} from './game/InteractionFX';
 import {load,persist,grow,plant,water,harvest,roast,brew,serve,upgrade,restock,newOrder,RECIPES,type RecipeId,type Order,type State} from './game/Economy';
 
 const state:State=load();
@@ -16,6 +18,7 @@ type Zone='farm'|'cafe';
 type Interact={x:number,y:number,kind:'plot'|'roaster'|'counter'|'customer',index?:number};
 class World extends Phaser.Scene{
   player!:Phaser.GameObjects.Container;
+  hero!:CharacterRig;
   target?:Phaser.Math.Vector2;
   pending?:Interact;
   zone:Zone='farm';
@@ -72,7 +75,8 @@ class World extends Phaser.Scene{
       if(state.orders.length===0)newOrder(state);
       this.refreshCustomers();
     }
-    this.player=this.makePerson(800,750,0x367f9b);
+    this.hero=createCharacter(this,800,750,0x367f9b);
+    this.player=this.hero.root;
     this.adjustCamera();
     action.textContent=zone==='farm'?'Đến quán ☕':'Về nông trại 🌱';
     this.refreshVisuals();sync();
@@ -114,29 +118,30 @@ class World extends Phaser.Scene{
       if(before!==state.orders.length){toast('Một khách đã rời quán!');this.refreshCustomers();sync()}
       if(time-this.lastOrders>18000){this.lastOrders=time;if(newOrder(state)){this.refreshCustomers();sync()}}
     }
-    if(!this.target||this.busy||this.mapOpen)return;
+    if(!this.target||this.busy||this.mapOpen){updateCharacter(this.hero,0,0,delta,time);return;}
     const dx=this.target.x-this.player.x,dy=this.target.y-this.player.y,d=Math.hypot(dx,dy),step=Math.min(d,delta*.23);
-    if(d>56){this.player.x+=dx/d*step;this.player.y+=dy/d*step;this.player.setDepth(this.player.y+10)}
-    else{this.target=undefined;if(this.pending){const obj=this.pending;this.pending=undefined;this.interact(obj)}}
+    if(d>56){this.player.x+=dx/d*step;this.player.y+=dy/d*step;this.player.setDepth(this.player.y+10);updateCharacter(this.hero,dx,dy,delta,time)}
+    else{this.target=undefined;updateCharacter(this.hero,0,0,delta,time);if(this.pending){const obj=this.pending;this.pending=undefined;this.interact(obj)}}
   }
   interact(obj:Interact){
     if(this.busy)return;
+    playAction(this.hero,this.time.now,550);
     if(obj.kind==='plot'){
       const i=obj.index!;const p=state.plots[i];
-      if(p.stage==='empty'){toast(plant(state,i)?'Đã gieo hạt (-3 xu) 🌱':'Không đủ 3 xu')}
-      else if(p.stage==='seed'){toast(water(state,i)?'Đã tưới! Chờ cây lớn 💧':'Chưa thể tưới')}
-      else if(p.stage==='ripe'){toast(harvest(state,i)?'+3 hạt cà phê 🫘':'Chưa thu hoạch được')}
+      if(p.stage==='empty'){if(plant(state,i)){toast('Đã gieo hạt (-3 xu) 🌱');interactionBurst(this,obj.x,obj.y,'plant')}else toast('Không đủ 3 xu')}
+      else if(p.stage==='seed'){if(water(state,i)){toast('Đã tưới! Chờ cây lớn 💧');interactionBurst(this,obj.x,obj.y,'water')}else toast('Chưa thể tưới')}
+      else if(p.stage==='ripe'){if(harvest(state,i)){toast('+3 hạt cà phê 🫘');interactionBurst(this,obj.x,obj.y,'harvest');floatingReward(this,obj.x,obj.y,'+3 🫘')}else toast('Chưa thu hoạch được')}
       else toast('Cây đang phát triển ⏳');
       this.refreshVisuals();sync();
-    }else if(obj.kind==='roaster'){toast(roast(state)?'Đã rang 3 hạt 🔥':'Cần 3 hạt tươi');sync()}
+    }else if(obj.kind==='roaster'){if(roast(state)){toast('Đã rang 3 hạt 🔥');interactionBurst(this,obj.x,obj.y,'brew');floatingReward(this,obj.x,obj.y,'+3 🔥')}else toast('Cần 3 hạt tươi');sync()}
     else if(obj.kind==='counter'){
       const order=state.orders[0];if(!order){toast('Chưa có đơn hàng');return}
       if(!brew(state,order.recipe)){toast('Thiếu hạt rang, sữa hoặc sô-cô-la');return}
       this.busy=true;toast('Đang pha '+RECIPES[order.recipe].name+'...');
-      this.time.delayedCall(RECIPES[order.recipe].brewMs,()=>{state.prepared.push(order.recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha '+RECIPES[order.recipe].name+'! ☕');sync()});sync();
+      brewProgress(this,obj.x,obj.y,RECIPES[order.recipe].brewMs,()=>{state.prepared.push(order.recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha '+RECIPES[order.recipe].name+'! ☕');floatingReward(this,obj.x,obj.y,'☕ '+RECIPES[order.recipe].name);sync()});sync();
     }else if(obj.kind==='customer'){
       const order=state.orders.find(o=>o.id===obj.index);if(!order)return;
-      if(serve(state,order)){toast('Đã phục vụ '+RECIPES[order.recipe].name+'! +'+(RECIPES[order.recipe].price+5*(state.level-1))+' xu');this.refreshCustomers()}
+      if(serve(state,order)){const reward=RECIPES[order.recipe].price+5*(state.level-1);toast('Đã phục vụ '+RECIPES[order.recipe].name+'! +'+reward+' xu');interactionBurst(this,obj.x,obj.y,'coin');floatingReward(this,obj.x,obj.y,'+'+reward+' 🪙');this.refreshCustomers()}
       else toast('Chưa pha đúng món '+RECIPES[order.recipe].name+' hoặc khách đã rời quán');sync();
     }
   }
