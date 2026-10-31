@@ -24,10 +24,12 @@ class World extends Phaser.Scene{
   customerActors:{order:Order,actor:Phaser.GameObjects.Container,homeX:number,homeY:number}[]=[];
   busy=false;
   lastOrders=0;
+  mapOpen=false;
   constructor(){super('world')}
   create(){
     this.drawZone('farm');
     this.input.on('pointerdown',(p:Phaser.Input.Pointer)=>{
+      if(this.mapOpen||this.busy)return;
       const pos=this.cameras.main.getWorldPoint(p.x,p.y);
       const near=this.objects.filter(o=>Phaser.Math.Distance.Between(o.x,o.y,pos.x,pos.y)<110).sort((a,b)=>Phaser.Math.Distance.Between(a.x,a.y,pos.x,pos.y)-Phaser.Math.Distance.Between(b.x,b.y,pos.x,pos.y))[0];
       this.pending=near;
@@ -76,7 +78,7 @@ class World extends Phaser.Scene{
     this.refreshVisuals();sync();
   }
   refreshCustomers(){
-    for(const c of this.customerActors)c.actor.destroy();
+    for(const c of this.customerActors){this.tweens.killTweensOf(c.actor);c.actor.destroy()}
     this.customerActors=[];
     this.objects=this.objects.filter(o=>o.kind!=='customer');
     state.orders.forEach((order,i)=>{
@@ -90,7 +92,9 @@ class World extends Phaser.Scene{
   }
   refreshVisuals(){
     if(this.zone!=='farm')return;
+    const before=state.plots.filter(p=>p.stage==='ripe').length;
     grow(state);
+    if(state.plots.filter(p=>p.stage==='ripe').length!==before)sync();
     state.plots.forEach((p,i)=>{
       const o=this.visuals[i];if(!o)return;
       const leaves=o.list[1] as Phaser.GameObjects.Arc;
@@ -110,7 +114,7 @@ class World extends Phaser.Scene{
       if(before!==state.orders.length){toast('Một khách đã rời quán!');this.refreshCustomers();sync()}
       if(time-this.lastOrders>18000){this.lastOrders=time;if(newOrder(state)){this.refreshCustomers();sync()}}
     }
-    if(!this.target||this.busy)return;
+    if(!this.target||this.busy||this.mapOpen)return;
     const dx=this.target.x-this.player.x,dy=this.target.y-this.player.y,d=Math.hypot(dx,dy),step=Math.min(d,delta*.23);
     if(d>56){this.player.x+=dx/d*step;this.player.y+=dy/d*step;this.player.setDepth(this.player.y+10)}
     else{this.target=undefined;if(this.pending){const obj=this.pending;this.pending=undefined;this.interact(obj)}}
@@ -127,7 +131,7 @@ class World extends Phaser.Scene{
     }else if(obj.kind==='roaster'){toast(roast(state)?'Đã rang 3 hạt 🔥':'Cần 3 hạt tươi');sync()}
     else if(obj.kind==='counter'){
       const order=state.orders[0];if(!order){toast('Chưa có đơn hàng');return}
-      if(!brew(state,order.recipe)){toast('Thiếu nguyên liệu! Mua thêm sữa/sô-cô-la ở nút Nâng cấp');return}
+      if(!brew(state,order.recipe)){toast('Thiếu hạt rang, sữa hoặc sô-cô-la');return}
       this.busy=true;toast('Đang pha '+RECIPES[order.recipe].name+'...');
       this.time.delayedCall(RECIPES[order.recipe].brewMs,()=>{state.prepared.push(order.recipe);state.drinks=state.prepared.length;this.busy=false;toast('Đã pha '+RECIPES[order.recipe].name+'! ☕');sync()});sync();
     }else if(obj.kind==='customer'){
@@ -139,6 +143,6 @@ class World extends Phaser.Scene{
 }
 const game=new Phaser.Game({type:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#9bd4a0',scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},render:{pixelArt:false,antialias:true},scene:[World]});
 const refreshOrders=()=>{if(!game.scene.isActive('world'))return;const scene=game.scene.getScene('world') as World;ordersEl.style.display=scene.zone==='cafe'?'block':'none';ordersEl.innerHTML=scene.zone==='cafe'?`📋 ĐƠN HÀNG <small>(còn ${state.orders.length})</small><div>${state.orders.map(o=>`<span>${RECIPES[o.recipe].name} · ${Math.max(0,Math.ceil((o.expiresAt-Date.now())/1000))}s</span>`).join('')}</div><button id="restock">🥛 Nhập nguyên liệu · 20 xu</button>`:'';const btn=document.querySelector<HTMLButtonElement>('#restock');if(btn)btn.onclick=()=>{toast(restock(state)?'Đã mua sữa và sô-cô-la':'Không đủ 20 xu');sync()}};
-const worldMap=createWorldMap(state,sync,toast);
+const worldMap=createWorldMap(state,sync,toast,open=>{const scene=game.scene.getScene('world') as World;scene.mapOpen=open;if(open){scene.target=undefined;scene.pending=undefined}});
 (document.getElementById('map-open') as HTMLButtonElement).onclick=()=>worldMap.open();
 window.setInterval(()=>{refreshOrders();worldMap.refresh()},1000);sync();
