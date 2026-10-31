@@ -96,7 +96,7 @@ test('v0.6.4 stress: 40 scene transitions without unbounded GPU texture growth',
  await expect.poll(async()=>Number(await host.getAttribute('data-texture-count')),{timeout:12000}).toBeGreaterThan(0);
  const samples:number[]=[];
  for(let i=0;i<40;i++){
-  await page.locator('#action').click();
+  await page.locator('#action').dispatchEvent('click');
   await expect(host).toHaveAttribute('data-zone',i%2===0?'cafe':'farm');
   if((i+1)%10===0){
    await expect.poll(async()=>Number(await host.getAttribute('data-texture-count'))).toBeGreaterThan(0);
@@ -104,7 +104,7 @@ test('v0.6.4 stress: 40 scene transitions without unbounded GPU texture growth',
   }
  }
  console.log('v0.6.4 texture samples after 10/20/30/40 transitions:',JSON.stringify(samples));
- expect(samples[3]-samples[1]).toBeLessThanOrEqual(12);
- expect(samples[3]).toBeLessThan(100);
+ expect(samples[3]-samples[1]).toBeLessThanOrEqual(2);
+ expect(samples[3]).toBeLessThan(30);
  expect(errors).toEqual([]);
 });
